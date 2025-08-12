@@ -50,8 +50,16 @@ Please answer in JSON format like this:
 }}
 """
 
-    response = ask_openrouter(prompt)
+    #response = ask_openrouter(prompt)
+    # TEMPORARY: USE FIXED RESPONSE
+    response = """{
+  "recommendations": [
+    {"name": "Magnesium Citrate", "rating": 4.5, "link": "https://example.com/magnesium-citrate"},
+    {"name": "Magnesium Glycinate", "rating": 4.7, "link": "https://example.com/magnesium-glycinate"},
+    {"name": "Magnesium Oxide", "rating": 4.0, "link": "https://example.com/magnesium-oxide"}
+  ]
+}"""
 
-    print(response)
+    #print(response)
 
     return response
