@@ -52,4 +52,6 @@ Please answer in JSON format like this:
 
     response = ask_openrouter(prompt)
 
-    return jsonify({"answer": response})
+    print(response)
+
+    return response
