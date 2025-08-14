@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [setupComplete, setSetupComplete] = useState(false);
 
   useEffect(() => {
     async function loadToken() {
@@ -16,9 +17,10 @@ export const AuthProvider = ({ children }) => {
     loadToken();
   }, []);
 
-  const login = async (token) => {
+  const login = async (token, setupComplete) => {
     await saveToken(token);
     setUserToken(token);
+    setSetupComplete(setupComplete);
   };
 
   const logout = async () => {
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ userToken, login, logout, loading }}>
+    <AuthContext.Provider value={{ userToken, login, logout, loading, setupComplete, setSetupComplete}}>
       {children}
     </AuthContext.Provider>
   );

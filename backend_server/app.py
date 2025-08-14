@@ -6,7 +6,22 @@ from config import Config
 from routes import register_routes
 from utils.extensions import db  # <- import from extensions
 
+
+from flask_jwt_extended import JWTManager
+from flask import jsonify
+
 jwt = JWTManager()
+
+@jwt.unauthorized_loader
+def custom_unauthorized_response(err_str):
+    print("JWT error:", err_str)
+    return jsonify({"msg": f"JWT error: {err_str}"}), 401
+
+@jwt.invalid_token_loader
+def custom_invalid_token_response(err_str):
+    print("Invalid token:", err_str)
+    return jsonify({"msg": f"Invalid token: {err_str}"}), 422
+
 
 def create_app():
     app = Flask(__name__)

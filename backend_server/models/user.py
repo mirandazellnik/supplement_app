@@ -1,10 +1,14 @@
-from utils.extensions import db
+from app import db
 from passlib.hash import bcrypt
+from sqlalchemy.types import JSON
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    setup_complete = db.Column(db.Boolean, default=False)
+    goals = db.Column(JSON, default=[])
+    meds = db.Column(JSON, default=[])
 
     def set_password(self, password):
         self.password_hash = bcrypt.hash(password)
@@ -13,4 +17,10 @@ class User(db.Model):
         return bcrypt.verify(password, self.password_hash)
 
     def to_dict(self):
-        return {"id": self.id, "username": self.username}
+        return {
+            "id": self.id,
+            "username": self.username,
+            "setup_complete": self.setup_complete,
+            "goals": self.goals,
+            "meds": self.meds
+        }
