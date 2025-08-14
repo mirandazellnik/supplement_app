@@ -20,7 +20,7 @@ export default function LoginScreen({ navigation }) {
       const data = await apiLogin(username, password);
       await saveToken(data.access_token);
 
-      await login(data.access_token);
+      await login(data.access_token, data.setup_complete);
       
     } catch (error) {
       Alert.alert("Login failed", error.toString());
