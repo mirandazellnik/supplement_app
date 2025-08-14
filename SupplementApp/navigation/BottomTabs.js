@@ -23,7 +23,9 @@ export default function BottomTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile">
+        {props => <ProfileScreen {...props}/>}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }
