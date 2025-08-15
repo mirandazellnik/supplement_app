@@ -16,18 +16,22 @@
     "@react-navigation/native-stack": "^7.3.25",
     "axios": "^1.11.0",
     "expo": "~53.0.20",
+    "expo-linear-gradient": "^14.1.5",
     "expo-status-bar": "~2.2.3",
+    "metro-react-native-babel-preset": "^0.77.0",
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-gesture-handler": "^2.28.0",
-    "react-native-reanimated": "^4.0.2",
     "react-native-safe-area-context": "^5.6.0",
     "react-native-screens": "^4.14.0",
     "react-native-vector-icons": "^10.3.0",
-    "react-native-worklets": "^0.4.1"
+    "react-native-worklets": "0.4.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@types/react": "~19.0.10",
+    "typescript": "~5.8.3"
   },
   "overrides": {
     "@react-native-async-storage/async-storage": "^1.22.0"
