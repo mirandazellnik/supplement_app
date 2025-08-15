@@ -17,3 +17,18 @@ export async function submitSetup(data) {
     throw e.response?.data?.msg || "Failed to submit setup";
   }
 }
+
+export async function getWhetherSetupComplete() {
+  try {
+    const token = await getToken();
+    const res = await axios.put(`${API_URL}/is_setup`, { }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res.data;
+  } catch (e) {
+    throw e.response?.data?.msg || "Failed to check setup status";
+  }
+}

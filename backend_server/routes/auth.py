@@ -25,6 +25,7 @@ def login():
     data = request.json
     username = data.get("username")
     password = data.get("password")
+    print(username)
     
     user = User.query.filter_by(username=username).first()
     if not user or not user.check_password(password):

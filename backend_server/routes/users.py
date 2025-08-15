@@ -27,3 +27,13 @@ def setup_user():
 
     db.session.commit()
     return jsonify(user.to_dict())
+
+@users_bp.route("/is_setup", methods=["PUT"])
+@jwt_required()
+def is_setup():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    return jsonify({"setup_complete": user.setup_complete})

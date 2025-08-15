@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import { getToken, saveToken, removeToken } from "../util/storage";
+import { getWhetherSetupComplete } from "../api/user"; // Assuming you have an API endpoint to check setup completion
 
 export const AuthContext = createContext();
 
@@ -12,6 +13,8 @@ export const AuthProvider = ({ children }) => {
     async function loadToken() {
       const token = await getToken();
       setUserToken(token);
+      const setup = await getWhetherSetupComplete()
+      setSetupComplete(setup.setup_complete);
       setLoading(false);
     }
     loadToken();

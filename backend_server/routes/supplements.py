@@ -50,7 +50,7 @@ Please answer in JSON format like this:
 }}
 """
 
-    #response = ask_openrouter(prompt)
+    
     # TEMPORARY: USE FIXED RESPONSE
     response = """{
   "recommendations": [
@@ -60,6 +60,7 @@ Please answer in JSON format like this:
   ]
 }"""
 
-    #print(response)
+    response = ask_openrouter(prompt)
+    print(response)
 
     return response
