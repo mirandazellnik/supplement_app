@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { removeToken } from "../util/storage";
-import { AuthContext } from "../navigation/AuthContext";
+import { AuthContext } from "../contexts/AuthContext";
 
 export default function ProfileScreen({ navigation }) {
   const { logout } = React.useContext(AuthContext);

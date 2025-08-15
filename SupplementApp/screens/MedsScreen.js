@@ -11,11 +11,13 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { submitSetup } from "../api/user";
-import { AuthContext } from "../navigation/AuthContext";
+import { AuthContext } from "../contexts/AuthContext";
+import { useAlert } from "../contexts/AlertContext";
 
 export default function MedsScreen({ navigation, meds, setMeds, selectedGoals }) {
   const [input, setInput] = useState("");
   const { setSetupComplete, logout } = useContext(AuthContext);
+  const { showAlert } = useAlert();
 
   const addMed = () => {
     if (input.trim()) {
@@ -32,7 +34,7 @@ export default function MedsScreen({ navigation, meds, setMeds, selectedGoals })
       setSetupComplete(true);
     } catch (err) {
       console.log("Submit setup failed:", err);
-      alert("Failed to submit. Please try again.");
+      showAlert("Failed to submit. Please try again.");
     }
   };
 

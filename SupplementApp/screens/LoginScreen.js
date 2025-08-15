@@ -1,29 +1,52 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   Platform,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { login as apiLogin } from "../api/auth";
 import { saveToken } from "../util/storage";
-import { AuthContext } from "../navigation/AuthContext";
+import { AuthContext } from "../contexts/AuthContext";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useAlert } from "../contexts/AlertContext";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(null); // 'username' | 'password' | null
   const { login } = useContext(AuthContext);
+  const { showAlert } = useAlert();
+
+  // Animated values for background and shadow
+  const usernameAnim = useRef(new Animated.Value(0)).current;
+  const passwordAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(usernameAnim, {
+      toValue: focusedInput === "username" ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [focusedInput]);
+
+  useEffect(() => {
+    Animated.timing(passwordAnim, {
+      toValue: focusedInput === "password" ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [focusedInput]);
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert("Please fill all fields");
+      showAlert("Please fill all fields");
       return;
     }
     setLoading(true);
@@ -32,15 +55,27 @@ export default function LoginScreen({ navigation }) {
       await saveToken(data.access_token);
       await login(data.access_token, data.setup_complete);
     } catch (error) {
-      Alert.alert("Login failed", error.toString());
+      showAlert("Login failed", error.toString());
     } finally {
       setLoading(false);
     }
   };
 
+  // Interpolations
+  const interpolateBackground = (anim) =>
+    anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.3)"],
+    });
+
+  const interpolateShadow = (anim) =>
+    anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 8], // shadow radius
+    });
+
   return (
     <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.gradient}>
-      {/* Logo fixed top-left */}
       <View style={styles.logoContainer}>
         <Image
           source={require("../assets/logo.png")}
@@ -49,7 +84,6 @@ export default function LoginScreen({ navigation }) {
         />
       </View>
 
-      {/* Login form */}
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
@@ -58,21 +92,50 @@ export default function LoginScreen({ navigation }) {
       >
         <Text style={styles.title}>Welcome Back</Text>
 
-        <TextInput
-          placeholder="Username"
-          placeholderTextColor="#ddd"
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-        />
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#ddd"
-          secureTextEntry
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-        />
+        <Animated.View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: interpolateBackground(usernameAnim),
+              shadowOpacity: usernameAnim,
+              shadowRadius: interpolateShadow(usernameAnim),
+            },
+          ]}
+        >
+          <TextInput
+            placeholder="Username"
+            placeholderTextColor="#ddd"
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+            onFocus={() => setFocusedInput("username")}
+            onBlur={() => setFocusedInput(null)}
+            cursorColor="#fff"
+          />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: interpolateBackground(passwordAnim),
+              shadowOpacity: passwordAnim,
+              shadowRadius: interpolateShadow(passwordAnim),
+            },
+          ]}
+        >
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#ddd"
+            secureTextEntry
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => setFocusedInput("password")}
+            onBlur={() => setFocusedInput(null)}
+            cursorColor="#fff"
+          />
+        </Animated.View>
 
         <TouchableOpacity
           style={[styles.button, loading && { opacity: 0.7 }]}
@@ -98,7 +161,6 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
 
-  // Fixed logo at top-left
   logoContainer: {
     position: "absolute",
     top: Platform.OS === "ios" ? 60 : 40,
@@ -113,9 +175,9 @@ const styles = StyleSheet.create({
 
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: "center", // vertically center the form
+    justifyContent: "center",
     paddingHorizontal: 30,
-    paddingTop: 100, // so content doesn’t overlap logo
+    paddingTop: 100,
     paddingBottom: 40,
   },
 
@@ -126,14 +188,23 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: "center",
   },
-  input: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    color: "#fff",
+
+  inputWrapper: {
     borderRadius: 12,
-    padding: 15,
     marginBottom: 20,
-    fontSize: 16,
+    shadowColor: "#fff",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
   },
+
+  input: {
+    color: "#fff",
+    padding: 15,
+    fontSize: 16,
+    backgroundColor: "transparent",
+  },
+
   button: {
     backgroundColor: "#fff",
     padding: 15,
@@ -146,6 +217,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   buttonText: { color: "#2575fc", fontWeight: "700", fontSize: 18 },
+
   linkContainer: { marginTop: 20, alignItems: "center" },
   linkText: { color: "#fff", textDecorationLine: "underline", fontSize: 16 },
 });

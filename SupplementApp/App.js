@@ -3,8 +3,10 @@ import { NavigationContainer } from "@react-navigation/native";
 import BottomTabs from "./navigation/BottomTabs";
 import AuthStack from "./navigation/AuthStack";
 import OnboardingNavigator from "./navigation/OnboardingNavigator";
-import { AuthProvider, AuthContext } from "./navigation/AuthContext";
+import { AuthProvider, AuthContext } from "./contexts/AuthContext";
+import { AlertProvider } from "./contexts/AlertContext";
 import { ActivityIndicator, View } from "react-native";
+
 
 function AppContent() {
   const { userToken, setupComplete } = useContext(AuthContext);
@@ -26,8 +28,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <AlertProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </AlertProvider>
   );
 }

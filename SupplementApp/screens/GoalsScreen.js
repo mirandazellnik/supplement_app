@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { AuthContext } from "../navigation/AuthContext";
+import { AuthContext } from "../contexts/AuthContext";
 
 const goalOptions = [
   "Longevity",
