@@ -1,7 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Image,
+  Platform,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { register } from "../api/auth";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -27,11 +37,23 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <LinearGradient colors={["#ff512f", "#dd2476"]} style={styles.gradient}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.container}
+      {/* Logo fixed top-left */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("../assets/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContainer}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Create Account</Text>
+
         <TextInput
           placeholder="Username"
           placeholderTextColor="#ddd"
@@ -47,25 +69,59 @@ export default function RegisterScreen({ navigation }) {
           value={password}
           onChangeText={setPassword}
         />
+
         <TouchableOpacity
           style={[styles.button, loading && { opacity: 0.7 }]}
           onPress={handleRegister}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>{loading ? "Registering..." : "Register"}</Text>
+          <Text style={styles.buttonText}>
+            {loading ? "Registering..." : "Register"}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.linkContainer}>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+          style={styles.linkContainer}
+        >
           <Text style={styles.linkText}>Already have an account? Login</Text>
         </TouchableOpacity>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
-  container: { flex: 1, justifyContent: "center", padding: 30 },
-  title: { fontSize: 34, fontWeight: "700", color: "#fff", marginBottom: 40, textAlign: "center" },
+
+  // Fixed logo at top-left
+  logoContainer: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 60 : 40,
+    left: 30,
+    zIndex: 10,
+  },
+  logo: {
+    width: 120,
+    height: 40,
+    tintColor: "#fff", // Makes black logo white
+  },
+
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center", // vertically center the form
+    paddingHorizontal: 30,
+    paddingTop: 100, // avoid overlap with logo
+    paddingBottom: 40,
+  },
+
+  title: {
+    fontSize: 34,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 30,
+    textAlign: "center",
+  },
   input: {
     backgroundColor: "rgba(255,255,255,0.15)",
     color: "#fff",
