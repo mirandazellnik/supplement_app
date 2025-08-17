@@ -1,8 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://192.168.3.196:5000/api/auth";
-const URL2 = require('./api_url.json').api_url;
-console.log(URL2)
+const BASE_URL = require('./api_url.json').api_url;
+const API_URL = BASE_URL + "/api/auth";
 
 export async function login(username, password) {
   try {

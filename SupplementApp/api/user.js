@@ -1,7 +1,8 @@
 import axios from "axios";
 import { getToken } from "../util/storage";
 
-const API_URL = "http://192.168.3.196:5000/api/users"; // adjust your server IP
+const BASE_URL = require('./api_url.json').api_url;
+const API_URL = BASE_URL + "/api/users";
 
 export async function submitSetup(data) {
   try {
