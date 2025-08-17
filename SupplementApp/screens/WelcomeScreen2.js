@@ -56,7 +56,7 @@ export default function WelcomeScreen2({ navigation }) {
               },
             ]}
           >
-            Remember that Green Zone is not a substitute for professional medical advice. Always consult with your healthcare provider before making any changes to your health regimen.
+            Remember that Blue Zone is not a substitute for professional medical advice. Always consult with your healthcare provider before making any changes to your health regimen.
           </Animated.Text>
         </View>
 

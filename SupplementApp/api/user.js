@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getToken } from "../util/storage";
 
-const API_URL = "http://192.168.1.207:5000/api/users"; // adjust your server IP
+const API_URL = "http://192.168.3.196:5000/api/users"; // adjust your server IP
 
 export async function submitSetup(data) {
   try {

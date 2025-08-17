@@ -74,7 +74,7 @@ export default function WelcomeScreen({ navigation }) {
               },
             ]}
           >
-            to Green Zone
+            to Blue Zone
           </Animated.Text>
         </View>
 

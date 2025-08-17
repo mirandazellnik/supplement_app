@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://192.168.1.207:5000"; // Change to your backend IP and port
+const API_BASE_URL = "http://192.168.3.196:5000"; // Change to your backend IP and port
 
 async function safeFetch(url, options) {
   try {
