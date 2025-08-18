@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import ProductScreen from "../screens/ProductScreen";
 import { Ionicons } from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
@@ -26,6 +27,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Profile">
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
+      <Tab.Screen name="Product" component={ProductScreen} />
     </Tab.Navigator>
   );
 }

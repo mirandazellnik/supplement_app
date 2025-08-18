@@ -1,17 +1,22 @@
-import colors from "./colors";
-
-export default {
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.textPrimary,
+export const typography = {
+  h1: {
+    fontSize: 32,
+    fontWeight: "700",
   },
-  subheading: {
-    fontSize: 18,
-    color: colors.textSecondary,
+  h2: {
+    fontSize: 26,
+    fontWeight: "700",
+  },
+  h3: {
+    fontSize: 20,
+    fontWeight: "600",
   },
   body: {
     fontSize: 16,
-    color: colors.textPrimary,
+    fontWeight: "400",
+  },
+  caption: {
+    fontSize: 13,
+    fontWeight: "400",
   },
 };

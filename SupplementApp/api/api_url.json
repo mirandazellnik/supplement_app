@@ -1,1 +1,4 @@
-{"api_url":"http://192.168.3.196:5000"}
+{
+    "api_url":"https://backendserver-production-d4d4.up.railway.app",
+    "local_api_url":"http://192.168.1.207:5000"
+}
