@@ -13,13 +13,13 @@ export default function OnboardingNavigator() {
   const [meds, setMeds] = useState([]);
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="WelcomePage">
+      {/*<Stack.Screen name="WelcomePage">
         {(props) => (
           <WelcomeScreen
             {...props}
           />
         )}
-      </Stack.Screen>
+      </Stack.Screen>*/}
       <Stack.Screen name="WelcomePage2">
         {(props) => (
           <WelcomeScreen2

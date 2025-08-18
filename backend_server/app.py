@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -11,6 +12,7 @@ from flask_jwt_extended import JWTManager
 from flask import jsonify
 
 jwt = JWTManager()
+migrate = Migrate()
 
 @jwt.unauthorized_loader
 def custom_unauthorized_response(err_str):
@@ -30,6 +32,7 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
+    migrate.init_app(app, db)  # <- add this
 
     from models.user import User  # <- import User model to ensure it's registered with SQLAlchemy
 

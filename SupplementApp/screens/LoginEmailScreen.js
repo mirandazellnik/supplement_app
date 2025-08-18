@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,42 +10,42 @@ import {
   Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { login as apiLogin } from "../api/auth";
-import { saveToken } from "../util/storage";
-import { AuthContext } from "../contexts/AuthContext";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
-
-export default function LoginScreen({ navigation, email }) {
-  const [password, setPassword] = useState("");
+import { check_whether_user_exists } from "../api/auth";
+ 
+export default function LoginEmailScreen({ navigation }) {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(null); // 'password' | null
-  const { login } = useContext(AuthContext);
+  const [focusedInput, setFocusedInput] = useState(null); // 'email' | null
   const { showAlert } = useAlert();
 
-  // Animated value for password background and shadow
-  const passwordAnim = useRef(new Animated.Value(0)).current;
+  // Animated values for background and shadow
+  const emailAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(passwordAnim, {
-      toValue: focusedInput === "password" ? 1 : 0,
+    Animated.timing(emailAnim, {
+      toValue: focusedInput === "email" ? 1 : 0,
       duration: 250,
       useNativeDriver: false,
     }).start();
   }, [focusedInput]);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      showAlert("Login Failed", "Please enter your password!");
+  const handleContinue = async () => {
+    if (!email) {
+      showAlert("Missing Email", "Please enter your email address!");
       return;
     }
     setLoading(true);
     try {
-      const data = await apiLogin(email, password);
-      await saveToken(data.access_token);
-      await login(data.access_token, data.setup_complete);
+      exists = await check_whether_user_exists(email);
+      if (!exists) {
+        navigation.navigate("Register", { email });
+      } else {
+        navigation.navigate("Login", { email });
+      }
     } catch (error) {
-      showAlert("Login failed", error.toString());
+      showAlert("Error", error.toString());
     } finally {
       setLoading(false);
     }
@@ -80,57 +80,43 @@ export default function LoginScreen({ navigation, email }) {
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Welcome Back!</Text>
+        <Text style={styles.title}>Get Started</Text>
 
-        {/* Info box with email */}
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            You've already used{" "}
-            <Text style={styles.boldEmail}>{email}</Text>
-            {" "}to sign in. Enter your password for that account.
-          </Text>
-        </View>
-
-        {/* Password label */}
-        <Text style={styles.inputLabel}>Password</Text>
+        {/* Small label above email box */}
+        <Text style={styles.inputLabel}>Email</Text>
         <Animated.View
           style={[
             styles.inputWrapper,
             {
-              backgroundColor: interpolateBackground(passwordAnim),
-              shadowOpacity: passwordAnim,
-              shadowRadius: interpolateShadow(passwordAnim),
+              backgroundColor: interpolateBackground(emailAnim),
+              shadowOpacity: emailAnim,
+              shadowRadius: interpolateShadow(emailAnim),
             },
           ]}
         >
           <TextInput
-            placeholder="Password"
+            placeholder="Email"
             placeholderTextColor="#ddd"
-            secureTextEntry
             style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setFocusedInput("password")}
+            value={email}
+            onChangeText={setEmail}
+            onFocus={() => setFocusedInput("email")}
             onBlur={() => setFocusedInput(null)}
             cursorColor="#fff"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
         </Animated.View>
 
         <TouchableOpacity
           style={[styles.button, loading && { opacity: 0.7 }]}
-          onPress={handleLogin}
+          onPress={handleContinue}
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Continuing..." : "Continue"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
-          style={styles.linkContainer}
-        >
-          <Text style={styles.linkText}>Forgot password?</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
     </LinearGradient>
@@ -166,25 +152,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 30,
     textAlign: "center",
-  },
-
-  infoBox: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 14,
-    padding: 18,
-    marginBottom: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoText: {
-    color: "#fff",
-    fontSize: 17,
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  boldEmail: {
-    fontWeight: "bold",
-    color: "#fff",
   },
 
   inputLabel: {
@@ -225,7 +192,4 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   buttonText: { color: "#2575fc", fontWeight: "700", fontSize: 18 },
-
-  linkContainer: { marginTop: 20, alignItems: "center" },
-  linkText: { color: "#fff", textDecorationLine: "underline", fontSize: 16 },
 });

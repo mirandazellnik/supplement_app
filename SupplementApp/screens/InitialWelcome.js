@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,12 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function WelcomeScreen({ navigation }) {
+export default function InitialWelcome({ navigation }) {
   const welcomeOpacity = useRef(new Animated.Value(0)).current;
   const welcomeSlide = useRef(new Animated.Value(30)).current;
 
-  const toGreenOpacity = useRef(new Animated.Value(0)).current;
-  const toGreenSlide = useRef(new Animated.Value(30)).current;
+  const toBlueOpacity = useRef(new Animated.Value(0)).current;
+  const toBlueSlide = useRef(new Animated.Value(30)).current;
 
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
@@ -29,13 +29,13 @@ export default function WelcomeScreen({ navigation }) {
       duration: 1200,
       useNativeDriver: true,
     }).start(() => {
-      // Animate "to Green Zone" only after "Welcome" finishes
-      Animated.timing(toGreenOpacity, {
+      // Animate "to Blue Zone" only after "Welcome" finishes
+      Animated.timing(toBlueOpacity, {
         toValue: 1,
         duration: 1200,
         useNativeDriver: true,
       }).start();
-      Animated.timing(toGreenSlide, {
+      Animated.timing(toBlueSlide, {
         toValue: 0,
         duration: 1200,
         useNativeDriver: true,
@@ -63,14 +63,14 @@ export default function WelcomeScreen({ navigation }) {
               },
             ]}
           >
-            Let's get you started
+            Welcome
           </Animated.Text>
           <Animated.Text
             style={[
               styles.subtitle,
               {
-                opacity: toGreenOpacity,
-                transform: [{ translateY: toGreenSlide }],
+                opacity: toBlueOpacity,
+                transform: [{ translateY: toBlueSlide }],
               },
             ]}
           >
@@ -78,12 +78,12 @@ export default function WelcomeScreen({ navigation }) {
           </Animated.Text>
         </View>
 
-        <Animated.View style={{ opacity: buttonOpacity, marginTop: 40 }}>
+        <Animated.View style={{ opacity: buttonOpacity, marginTop: 40, width: "100%" }}>
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate("WelcomePage2")}
+            style={styles.getStartedButton}
+            onPress={() => navigation.navigate("LoginEmail")}
           >
-            <Text style={styles.buttonText}>Get Started</Text>
+            <Text style={styles.getStartedText}>Get Started</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   textContainer: {
-    // Fix height to avoid jumps
     height: 150,
     justifyContent: "center",
     alignItems: "center",
@@ -118,19 +117,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
   },
-  button: {
+  getStartedButton: {
     backgroundColor: "#fff",
-    paddingVertical: 15,
+    paddingVertical: 18,
     paddingHorizontal: 40,
-    borderRadius: 12,
+    borderRadius: 14,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 5,
+    marginBottom: 18,
+    width: "100%",
+    alignItems: "center",
   },
-  buttonText: {
+  getStartedText: {
     color: "#2575fc",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
   },
 });

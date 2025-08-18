@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getToken } from "../util/storage";
 
-const BASE_URL = require('./api_url.json').api_url;
+const BASE_URL = require('./api_url.json').local_api_url;
 const API_URL = BASE_URL + "/api/users";
 
 export async function submitSetup(data) {
