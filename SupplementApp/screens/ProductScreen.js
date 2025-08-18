@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import React, { useState, useRef } from "react";
+import { Animated, View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
+import StarRating from "../components/StarRating";
 
 const essentials = [
   { id: "1", name: "Vitamin C" },
@@ -14,26 +15,61 @@ const essentials = [
 ];
 
 const categories = [
-  { id: "1", name: "Effectiveness", rating: "High", detail: "Clinically proven to be effective in most users." },
-  { id: "2", name: "Safety", rating: "Medium", detail: "Generally safe, but consult your doctor if unsure." },
-  { id: "3", name: "Absorption", rating: "High", detail: "Absorbs well with or without food." },
-  { id: "4", name: "Value", rating: "Medium", detail: "Priced competitively for its category." },
-  { id: "5", name: "Purity", rating: "High", detail: "Third-party tested for purity and quality." },
-  { id: "6", name: "Taste", rating: "Low", detail: "Some users report a strong aftertaste." },
-  { id: "7", name: "Packaging", rating: "High", detail: "Eco-friendly and easy to use." },
+  { id: "1", name: "Purity", rating: "Good", detail: "Third-party tested for purity and quality." },
+  { id: "2", name: "Potency", rating: "Okay", detail: "Label-accurate and high bio-availability." },
+  { id: "3", name: "Additives", rating: "Great", detail: "Few or no additives or fillers." },
+  { id: "4", name: "Safety", rating: "Okay", detail: "No known risks." },
+  { id: "5", name: "Evidence", rating: "Bad", detail: "Third-party tested for purity and quality." },
+  { id: "6", name: "Brand", rating: "Okay", detail: "Recalls/history of fraud." },
+  { id: "7", name: "Environmental", rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
 ];
 
 const ProductScreen = ({ navigation }) => {
   const [expanded, setExpanded] = useState({});
+  const anims = useRef({}).current;
+
+  const toggleExpand = (id) => {
+    setExpanded((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      // Animate open/close
+      if (!anims[id]) {
+        anims[id] = new Animated.Value(prev[id] ? 1 : 0);
+      }
+      Animated.timing(anims[id], {
+        toValue: next[id] ? 1 : 0,
+        duration: 250,
+        useNativeDriver: false,
+      }).start();
+      return next;
+    });
+  };
+
+  // Add this helper function for dot color:
+  const getDotColor = (rating) => {
+    switch (rating.toLowerCase()) {
+      case "great":
+        return "#1B873B"; // dark green
+      case "good":
+        return "#6DD47E"; // light green
+      case "okay":
+        return "#FFA500"; // orange
+      case "bad":
+        return "#FF3B30"; // red
+      case "medium":
+        return "#FFD966"; // yellowish for "Medium"
+      case "high":
+        return "#1B87B8"; // blue for "High"
+      case "low":
+        return "#B81B1B"; // dark red for "Low"
+      default:
+        return "#B0B0B0"; // neutral gray fallback
+    }
+  };
 
   const product = {
     name: "Super Immune Boost",
     image: require("../assets/images/vitamin-c.png"), // Replace with your image
     rating: 4.4,
-  };
-
-  const toggleExpand = (id) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const renderStars = (rating) => {
@@ -43,7 +79,7 @@ const ProductScreen = ({ navigation }) => {
         <Ionicons
           key={i}
           name={i <= Math.floor(rating) ? "star" : rating >= i - 0.5 ? "star-half" : "star-outline"}
-          size={22}
+          size={20}
           color={colors.primary}
         />
       );
@@ -53,18 +89,22 @@ const ProductScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Top section: Product image and name */}
+      {/* Top section: Product image, name, stars, and purchase button */}
       <View style={styles.topRow}>
         <Image source={product.image} style={styles.productImage} />
-        <View style={{ flex: 1, justifyContent: "center" }}>
+        <View style={styles.titleStarsContainer}>
           <Text style={styles.productName}>{product.name}</Text>
+          <View style={styles.starsAndButtonRow}>
+            <View style={styles.ratingRow}>
+              <StarRating rating={product.rating} size={20} gap={2} />
+              <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
+            </View>
+            <TouchableOpacity style={styles.purchaseIconButton} onPress={() => {/* navigation to purchase */}}>
+              <Ionicons name="cart-outline" size={24} color={colors.primary} />
+              <Text style={styles.buyText}>BUY</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-
-      {/* Rating */}
-      <View style={styles.ratingRow}>
-        {renderStars(product.rating)}
-        <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
       </View>
 
       {/* Essentials */}
@@ -84,36 +124,50 @@ const ProductScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Categories */}
+{/* Categories */}
       <Text style={styles.sectionTitle}>Categories</Text>
-      {categories.map((cat) => (
-        <View key={cat.id} style={styles.categoryContainer}>
-          <TouchableOpacity style={styles.categoryHeader} onPress={() => toggleExpand(cat.id)}>
-            <Text style={styles.categoryName}>{cat.name}</Text>
-            <View style={styles.categoryRatingRow}>
-              <Text style={styles.categoryRating}>{cat.rating}</Text>
-              <Ionicons
-                name={expanded[cat.id] ? "chevron-up" : "chevron-down"}
-                size={20}
-                color={colors.textSecondary}
-              />
-            </View>
-          </TouchableOpacity>
-          {expanded[cat.id] && (
-            <View style={styles.categoryDetail}>
-              <Text style={styles.categoryDetailText}>{cat.detail}</Text>
-            </View>
-          )}
-        </View>
-      ))}
-
-      {/* Purchase Button */}
-      <TouchableOpacity style={styles.purchaseButton} onPress={() => {/* navigation to purchase */}}>
-        <Text style={styles.purchaseButtonText}>Purchase</Text>
-      </TouchableOpacity>
+      {categories.map((cat) => {
+        if (!anims[cat.id]) anims[cat.id] = new Animated.Value(0);
+        return (
+          <View key={cat.id} style={styles.categoryContainer}>
+            <TouchableOpacity style={styles.categoryHeader} onPress={() => toggleExpand(cat.id)}>
+              <Text style={styles.categoryName}>{cat.name}</Text>
+              <View style={styles.categoryRatingRow}>
+                <Text style={styles.categoryRating}>{cat.rating}</Text>
+                <View
+                  style={[
+                    styles.ratingDot,
+                    { backgroundColor: getDotColor(cat.rating) },
+                  ]}
+                />
+                <Ionicons
+                  name={expanded[cat.id] ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+            <Animated.View
+              style={{
+                overflow: "hidden",
+                height: anims[cat.id].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 60],
+                }),
+                opacity: anims[cat.id],
+              }}
+            >
+              <View style={styles.categoryDetail}>
+                <Text style={styles.categoryDetailText}>{cat.detail}</Text>
+              </View>
+            </Animated.View>
+          </View>
+        );
+      })}
     </ScrollView>
   );
 };
+
 
 const ESSENTIAL_ITEM_WIDTH = 110;
 const ESSENTIAL_ITEM_HEIGHT = 54;
@@ -136,23 +190,53 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
     backgroundColor: colors.surface,
   },
+  titleStarsContainer: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+  },
   productName: {
     ...typography.h2,
     color: colors.textPrimary,
     fontWeight: "bold",
     flexShrink: 1,
+    marginBottom: 2,
+  },
+  starsAndButtonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
   },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.md,
-    marginLeft: 4,
   },
   ratingText: {
     marginLeft: 8,
     color: colors.textSecondary,
     fontSize: 16,
     fontWeight: "500",
+  },
+ purchaseIconButton: {
+    flexDirection: "row", // add this for icon + text
+    alignItems: "center",
+    marginLeft: 18,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  buyText: {
+    color: colors.primary,
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 6,
+    letterSpacing: 1,
   },
   sectionTitle: {
     ...typography.h3,
@@ -166,7 +250,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: spacing.sm,
     marginBottom: spacing.lg,
-    // subtle shadow
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -174,7 +257,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   essentialItem: {
-    backgroundColor: colors.primary + "15", // light tint of primary
+    backgroundColor: colors.background,
     borderRadius: 16,
     width: ESSENTIAL_ITEM_WIDTH,
     height: ESSENTIAL_ITEM_HEIGHT,
@@ -189,13 +272,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
   },
   essentialText: {
-    color: colors.primary,
+    color: colors.textPrimary,
     fontWeight: "700",
     fontSize: 16,
     textAlign: "center",
   },
   categoryContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderRadius: 12,
     marginBottom: spacing.sm,
     overflow: "hidden",
@@ -223,6 +306,13 @@ const styles = StyleSheet.create({
     marginRight: 6,
     fontSize: 15,
   },
+  ratingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+    marginLeft: 0,
+  },
   categoryDetail: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
@@ -232,20 +322,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-  purchaseButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: spacing.lg,
-    marginBottom: spacing.lg,
-    elevation: 2,
-  },
-  purchaseButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 18,
-    letterSpacing: 1,
-  },
 });
+
 export default ProductScreen;

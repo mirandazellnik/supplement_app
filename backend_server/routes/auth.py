@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.extensions import db
 from models.user import User
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from datetime import timedelta
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -44,7 +45,8 @@ def login():
     if not user or not user.check_password(password):
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=str(user.id))
+    token_expiration = timedelta(minutes=120)
+    access_token = create_access_token(identity=str(user.id), expires_delta=token_expiration)
     return jsonify({
         "access_token": access_token,
         "setup_complete": user.setup_complete
