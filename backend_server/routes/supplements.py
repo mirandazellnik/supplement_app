@@ -2,6 +2,9 @@ from flask import Blueprint, jsonify, request
 from services.gpt_service import analyze_supplements
 from services.llm_client import ask_openrouter
 from services.vector_store import vector_search
+import requests
+
+NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9/products"
 
 supplements_bp = Blueprint("supplements", __name__)
 
@@ -64,3 +67,26 @@ Please answer in JSON format like this:
     print(response)
 
     return response
+
+@supplement_bp.route("/lookup", methods=["POST"])
+def lookup():
+    data = request.get_json()
+    barcode = data.get("barcode")
+
+    if not barcode:
+        return jsonify({"error": "No barcode provided"}), 400
+
+    try:
+        # Query NIH DSLD API by UPC
+        response = requests.get(NIH_API_URL, params={"upc": barcode})
+        response.raise_for_status()
+
+        products = response.json()
+        if not products:
+            return jsonify({"error": "No product found"}), 404
+
+        print(products)
+        return jsonify(products)
+
+    except requests.RequestException as e:
+        return jsonify({"error": str(e)}), 500
