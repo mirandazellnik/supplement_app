@@ -4,6 +4,8 @@ import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import ProductScreen from "../screens/ProductScreen";
 import { Ionicons } from "@expo/vector-icons";
+import QRScanner from "../screens/scanner";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -28,6 +30,7 @@ export default function BottomTabs() {
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
       <Tab.Screen name="Product" component={ProductScreen} />
+      <Tab.Screen name="Scanner" component={QRScanner} />
     </Tab.Navigator>
   );
 }
