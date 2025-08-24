@@ -68,7 +68,7 @@ Please answer in JSON format like this:
 
     return response
 
-@supplement_bp.route("/lookup", methods=["POST"])
+@supplements_bp.route("/lookup", methods=["POST"])
 def lookup():
     data = request.get_json()
     barcode = data.get("barcode")
