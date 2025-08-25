@@ -28,6 +28,18 @@ const ProductScreen = ({ barcode, isExpanded, scrollOffsetRef }) => {
   const anims = useRef({}).current;
   const [expanded, setExpanded] = useState({});
 
+  const sheetAnim = useRef(new Animated.Value(FULL_HEIGHT)).current;
+  const sheetPosRef = useRef(FULL_HEIGHT); // <- stores numeric value
+  const scrollOffset = useRef(0);
+
+  // keep sheetPosRef updated
+  useEffect(() => {
+    const id = sheetAnim.addListener(({ value }) => {
+      sheetPosRef.current = value;
+    });
+    return () => sheetAnim.removeListener(id);
+  }, [sheetAnim]);
+
   const toggleExpand = (id) => {
     setExpanded((prev) => {
       const next = { ...prev, [id]: !prev[id] };
@@ -50,11 +62,13 @@ const ProductScreen = ({ barcode, isExpanded, scrollOffsetRef }) => {
   };
 
   return (
-  <ScrollView
-    scrollEnabled={isExpanded && sheetAnim._value === 0} // only allow scroll when fully expanded
-    onScroll={(e) => (scrollOffsetRef.current = e.nativeEvent.contentOffset.y)}
-    scrollEventThrottle={16}
-  >
+<ScrollView
+  scrollEnabled={isExpanded && sheetPosRef.current === 0}
+  onScroll={(e) => {
+    scrollOffset.current = e.nativeEvent.contentOffset.y;
+  }}
+  scrollEventThrottle={16}
+>
       <View style={styles.topRow}>
         <Image source={product.image} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>

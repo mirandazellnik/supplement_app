@@ -6,6 +6,7 @@ import OnboardingNavigator from "./navigation/OnboardingNavigator";
 import { AuthProvider, AuthContext } from "./contexts/AuthContext";
 import { AlertProvider } from "./contexts/AlertContext";
 import { ActivityIndicator, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
 function AppContent() {
@@ -28,10 +29,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AlertProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </AlertProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AlertProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </AlertProvider>
+    </GestureHandlerRootView>
   );
 }

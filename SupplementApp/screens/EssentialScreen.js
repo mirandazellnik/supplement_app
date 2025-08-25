@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList } from "react-native";
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
@@ -27,19 +27,42 @@ const products = [
     rating: 4.0,
   },
   {
-    id: "p3",
+    id: "p4",
     name: "C-1000 Plus",
     image: require("../assets/images/vitamin-c.png"),
     rating: 3.7,
   },
+  /*  {
+    id: "p5",
+    name: "C-1000 Plus",
+    image: require("../assets/images/vitamin-c.png"),
+    rating: 3.7,
+  },
+    {
+    id: "p6",
+    name: "C-1000 Plus",
+    image: require("../assets/images/vitamin-c.png"),
+    rating: 3.7,
+  },
+    {
+    id: "p7",
+    name: "C-1000 Plus",
+    image: require("../assets/images/vitamin-c.png"),
+    rating: 3.7,
+  },
+    {
+    id: "p8",
+    name: "C-1000 Plus",
+    image: require("../assets/images/vitamin-c.png"),
+    rating: 3.7,
+  },*/
 ];
+
+const PRODUCT_IMAGE_SIZE = 60;
 
 const EssentialScreen = ({ navigation }) => {
   const renderProduct = ({ item }) => (
-    <TouchableOpacity
-      style={styles.productBox}
-      onPress={() => navigation.navigate("Product", { productId: item.id })}
-    >
+    <View style={styles.productBox}>
       <Image source={item.image} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
@@ -48,33 +71,28 @@ const EssentialScreen = ({ navigation }) => {
           <Text style={styles.ratingText}>{item.rating.toFixed(1)}/5</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      <Text style={styles.essentialName}>{essential.name}</Text>
-      <Text style={styles.essentialDescription}>{essential.description}</Text>
-      <Text style={styles.sectionTitle}>Products with {essential.name}</Text>
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={renderProduct}
-        contentContainerStyle={{ paddingBottom: spacing.md }}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-      />
-    </ScrollView>
+    <FlatList
+      data={products}
+      keyExtractor={(item) => item.id}
+      renderItem={renderProduct}
+      contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}
+      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+      ListHeaderComponent={
+        <>
+          <Text style={styles.essentialName}>{essential.name}</Text>
+          <Text style={styles.essentialDescription}>{essential.description}</Text>
+          <Text style={styles.sectionTitle}>Products with {essential.name}</Text>
+        </>
+      }
+    />
   );
 };
 
-const PRODUCT_IMAGE_SIZE = 60;
-
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-    flex: 1,
-  },
   essentialName: {
     ...typography.h2,
     color: colors.textPrimary,

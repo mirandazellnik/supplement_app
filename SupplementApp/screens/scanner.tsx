@@ -1,138 +1,171 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, Dimensions, Animated, PanResponder, Vibration, StyleSheet } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Animated,
+  PanResponder,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { Camera, CameraView } from "expo-camera";
-import ProductScreen from "./ProductHalf";
+import { Ionicons } from "@expo/vector-icons";
+import StarRating from "../components/StarRating";
+import { colors } from "../styles/colors";
+import { spacing } from "../styles/spacing";
+import { typography } from "../styles/typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { lookup } from "../api/supplements";
 
-const { height } = Dimensions.get("window");
 
-const QRScanner: React.FC = () => {
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+export default function QRScanner() {
   const insets = useSafeAreaInsets();
-  const TAB_HEIGHT = 60 + insets.bottom;
-  const FULL_HEIGHT = height - TAB_HEIGHT;
-  const PEEK_HEIGHT = 120;
 
-  const [hasCameraPermission, setCameraPermission] = useState<boolean | null>(null);
-  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
-  const [isScanningEnabled, setIsScanningEnabled] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
 
-  const sheetAnim = useRef(new Animated.Value(FULL_HEIGHT)).current;
-  const gestureStartY = useRef(0);
-  const scrollOffset = useRef(0);
+  const panY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const lastOffset = useRef(SCREEN_HEIGHT);
 
-  useEffect(() => {
-    const requestPermissions = async () => {
-      const cameraPermission = await Camera.requestCameraPermissionsAsync();
-      setCameraPermission(cameraPermission.status === "granted");
-    };
-    requestPermissions();
-  }, []);
-
-  const handleBarCodeScanned = ({ data }) => {
-    if (!isScanningEnabled) return;
-    Vibration.vibrate();
-    setScannedBarcode(data);
-    setIsScanningEnabled(false);
-
-    Animated.spring(sheetAnim, {
-      toValue: FULL_HEIGHT - PEEK_HEIGHT,
-      useNativeDriver: true,
-      bounciness: 6,
-    }).start(() => setIsExpanded(false));
+  // Sample product
+  const product = {
+    name: "Super Immune Boost",
+    image: require("../assets/images/vitamin-c.png"),
+    rating: 4.4,
   };
 
-  const sheetPanResponder = useRef(
+  useEffect(() => {
+    Camera.requestCameraPermissionsAsync().then(res => {
+      setHasCameraPermission(res.status === "granted");
+    });
+  }, []);
+
+  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
+    if (!scanned) {
+      setScanned(true);
+
+      let x = await lookup(data); // Lookup product by UPC
+      console.log("Lookup result:", x);
+
+      // Show modal
+      Animated.timing(panY, {
+        toValue: 0, // fully visible
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => lastOffset.current = 0);
+    }
+  };
+
+  const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        // Only let ScrollView handle gestures if sheet fully expanded AND scrollOffset > 0
-        return sheetAnim._value > 0 || scrollOffset.current <= 0;
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to downward drag
+        return gestureState.dy > 5;
       },
-      onPanResponderGrant: () => {
-        gestureStartY.current = sheetAnim._value;
+      onPanResponderGrant: () => panY.setOffset(lastOffset.current),
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy < 0) return; // prevent dragging up
+        panY.setValue(gestureState.dy);
       },
-      onPanResponderMove: (_, gesture) => {
-        let newY = gestureStartY.current + gesture.dy * 0.5; // smooth, sensitive drag
-        newY = Math.max(0, Math.min(FULL_HEIGHT, newY));
-        sheetAnim.setValue(newY);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const threshold = FULL_HEIGHT / 5; // smaller threshold
-        if (sheetAnim._value < threshold) {
-          // Fully expand
-          Animated.spring(sheetAnim, { toValue: 0, useNativeDriver: true, bounciness: 6 }).start(() => setIsExpanded(true));
-        } else if (sheetAnim._value < FULL_HEIGHT - PEEK_HEIGHT / 2) {
-          // Peek
-          Animated.spring(sheetAnim, { toValue: FULL_HEIGHT - PEEK_HEIGHT, useNativeDriver: true, bounciness: 6 }).start(() => setIsExpanded(false));
+      onPanResponderRelease: (_, gestureState) => {
+        panY.flattenOffset();
+        if (gestureState.dy > 50) {
+          // Dragged down → close modal
+          Animated.timing(panY, {
+            toValue: SCREEN_HEIGHT,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => setScanned(false));
+          lastOffset.current = SCREEN_HEIGHT;
         } else {
-          // Collapse completely
-          Animated.timing(sheetAnim, { toValue: FULL_HEIGHT, duration: 200, useNativeDriver: true }).start(() => {
-            setIsScanningEnabled(true);
-            setScannedBarcode(null);
-            setIsExpanded(false);
-          });
+          // Snap back to bottom
+          Animated.timing(panY, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => lastOffset.current = 0);
         }
       },
     })
   ).current;
 
-  if (!hasCameraPermission) return null;
+  if (hasCameraPermission === null) return <View style={{ flex: 1 }} />;
+  if (hasCameraPermission === false)
+    return (
+      <View style={styles.center}>
+        <Text>No camera permission</Text>
+      </View>
+    );
 
-  const overlayOpacity = sheetAnim.interpolate({
-    inputRange: [FULL_HEIGHT - PEEK_HEIGHT, FULL_HEIGHT],
-    outputRange: [0.3, 0],
-    extrapolate: "clamp",
-  });
+  // Modal height: only enough to show title, stars, image, buy button
+  const MODAL_HEIGHT = 160;
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Camera */}
       <CameraView
-        onBarcodeScanned={isScanningEnabled ? handleBarCodeScanned : undefined}
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{ barcodeTypes: ["upc_a", "upc_e", "ean13", "ean8"] }}
-        style={{ flex: 1 }}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Darkened overlay */}
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: "black", opacity: overlayOpacity }]}
-      />
-
-      {/* Bottom sheet */}
-      <Animated.View
-        {...sheetPanResponder.panHandlers}
-        style={[
-          styles.sheet,
-          {
-            height: FULL_HEIGHT,
-            transform: [{ translateY: sheetAnim }],
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-          },
-        ]}
-      >
-        <ProductScreen
-          barcode={scannedBarcode}
-          isExpanded={sheetAnim._value <= FULL_HEIGHT - PEEK_HEIGHT}
-          scrollOffsetRef={scrollOffset}
-        />
-      </Animated.View>
+      {/* Modal */}
+      {scanned && (
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.modal,
+            {
+              height: MODAL_HEIGHT + insets.bottom,
+              transform: [{ translateY: panY }],
+              paddingBottom: insets.bottom,
+            },
+          ]}
+        >
+          <View style={styles.topRow}>
+            <Image source={product.image} style={styles.productImage} />
+            <View style={styles.titleStarsContainer}>
+              <Text style={styles.productName}>{product.name}</Text>
+              <View style={styles.starsAndButtonRow}>
+                <StarRating rating={product.rating} size={20} gap={2} />
+                <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
+                <TouchableOpacity style={styles.purchaseIconButton}>
+                  <Ionicons name="cart-outline" size={24} color={colors.primary} />
+                  <Text style={styles.buyText}>BUY</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  sheet: {
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  modal: {
     position: "absolute",
     left: 0,
     right: 0,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: -2 },
-    overflow: "hidden",
+    bottom: 0,
+    backgroundColor: "white",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    elevation: 5,
+    zIndex: 1000,
+    paddingHorizontal: spacing.md,
+    justifyContent: "center",
   },
+  topRow: { flexDirection: "row", alignItems: "center" },
+  productImage: { width: 70, height: 70, borderRadius: 16, marginRight: spacing.md, backgroundColor: colors.surface },
+  titleStarsContainer: { flex: 1, flexDirection: "column", justifyContent: "center" },
+  productName: { ...typography.h2, color: colors.textPrimary, fontWeight: "bold", marginBottom: 4 },
+  starsAndButtonRow: { flexDirection: "row", alignItems: "center", marginTop: 2, gap: 12 },
+  ratingText: { color: colors.textSecondary, fontSize: 16, fontWeight: "500", marginLeft: 4 },
+  purchaseIconButton: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12, marginLeft: 12, elevation: 2 },
+  buyText: { color: colors.primary, fontWeight: "bold", fontSize: 16, marginLeft: 6 },
 });
-
-export default QRScanner;
