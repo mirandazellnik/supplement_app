@@ -36,4 +36,5 @@ COPY . .
 EXPOSE 5000
 
 # Run the app using gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+# UNSURE WHETHER THIS WILL WORK
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "backend_server.app:app"]

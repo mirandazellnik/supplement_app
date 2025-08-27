@@ -1,6 +1,7 @@
 import os
 import requests
-from config import Config
+
+from backend_server.config import Config
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 

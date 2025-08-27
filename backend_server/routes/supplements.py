@@ -1,9 +1,12 @@
 from flask import Blueprint, jsonify, request
-from services.gpt_service import analyze_supplements
-from services.llm_client import ask_openrouter
-from services.vector_store import vector_search
-from utils.barcodes import format_barcode
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import requests
+
+from backend_server.services.gpt_service import analyze_supplements
+from backend_server.services.llm_client import ask_openrouter
+from backend_server.services.vector_store import vector_search
+from backend_server.utils.barcodes import format_barcode
+from backend_server.services.tasks import fetch_label_details
 
 NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
 
@@ -70,40 +73,43 @@ Please answer in JSON format like this:
     return response
 
 @supplements_bp.route("/lookup", methods=["POST"])
+@jwt_required()
 def lookup():
     data = request.get_json()
     barcode = data.get("barcode")
-    barcode = format_barcode(barcode)
-
-    #print(NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
-
-    #return jsonify({"a": "a"}), 200
-
-    print(f"Looking up barcode: {barcode}")
-
     if not barcode:
-        return jsonify({"error": "No barcode provided"}), 400
+        return jsonify({"error": "Missing barcode"}), 400
+    barcode = format_barcode(barcode)
+    user_id = get_jwt_identity()  # current user
 
     try:
         # Query NIH DSLD API by UPC
+        print(f"looking for", NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
         response = requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
-
-        #print(f"NIH API response status: {response.status_code}")
         response.raise_for_status()
-
-        products = response.json()
-
-        #print(f"NIH API products: {products}")
+        products = response.json().get("hits", [])
 
         if not products:
             return jsonify({"error": "No product found"}), 404
 
-        return jsonify(products)
+        # Immediately return initial info to frontend
+        initial_info = []
+        for product in products:
+            p = product["_source"]
+            initial_info.append({
+                "id": product["_id"],
+                "name": p.get("fullName"),
+                "brand": p.get("brandName"),
+                "image": p.get("thumbnail"),
+                "netContents": p.get("netContents"),
+                "claims": p.get("claims")
+            })
+
+            # Trigger background task to fetch /label details
+            fetch_label_details.delay(user_id, product["_id"])
+
+        return jsonify({"products": initial_info})
 
     except requests.RequestException as e:
-        print(f"Error querying NIH API: {e}")
+        print("Error querying NIH API:", e)
         return jsonify({"error": str(e)}), 500
-    except ValueError as ve:
-        # JSON decoding error
-        print(f"JSON decode error: {ve}, response text: {response.text}")
-        return jsonify({"error": "Invalid response from NIH API"}), 500

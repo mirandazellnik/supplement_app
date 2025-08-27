@@ -28,11 +28,11 @@ def format_barcode(barcode: str) -> str:
     # Detect barcode type
     if len(barcode) == 12:
         # UPC-A
-        return f"{barcode[0]} {barcode[1:6]} {barcode[6:11]} {barcode[11]}"
+        return f"{barcode[0]}%20{barcode[1:6]}%20{barcode[6:11]}%20{barcode[11]}"
     elif len(barcode) == 6:
         # UPC-E
         upca = expand_upce(barcode)
-        return f"{upca[0]} {upca[1:6]} {upca[6:11]} {upca[11]}"
+        return f"{upca[0]}%20{upca[1:6]}%20{upca[6:11]}%20{upca[11]}"
     elif len(barcode) in (8, 13):
         # EAN-8 or EAN-13
         print(f"EAN barcode detected: {barcode}")

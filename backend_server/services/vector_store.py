@@ -1,7 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 
-from services.embeddings import embed_text
+from backend_server.services.embeddings import embed_text
 
 settings = Settings(
     persist_directory="./chroma_db",
