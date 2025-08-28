@@ -67,6 +67,7 @@ def handle_connect(auth=None):
         from flask_socketio import join_room
         join_room(user_id)
         logger.info(f"User {user_id} connected to WebSocket")
+        socketio.emit("detailed_info", {"junk":"test"}, room=user_id)
     except Exception as e:
         logger.info("Connect error:", e)
         return False
