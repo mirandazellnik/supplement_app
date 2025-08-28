@@ -11,6 +11,12 @@ from backend_server.utils.extensions import db
 from backend_server.services.celery_worker import init_celery
 from backend_server.services.socketio_ref import socketio
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+logger.info("Logtest 1")
+
 jwt = JWTManager()
 migrate = Migrate()
 
@@ -25,6 +31,7 @@ def custom_invalid_token_response(err_str):
     return jsonify({"msg": f"Invalid token: {err_str}"}), 422
 
 def create_app():
+    logger.info("Logtest 2")
     app = Flask(__name__)
     CORS(app)
     app.config.from_object(Config)
@@ -49,6 +56,7 @@ print("App created")
 
 @socketio.on("connect")
 def handle_connect(auth=None):
+    logger.info("Logtest 3")
     print("SocketIO connect fired!", auth)
     return True
 
