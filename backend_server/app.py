@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+#import eventlet
+#eventlet.monkey_patch()
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -9,7 +9,7 @@ from backend_server.config import Config
 from backend_server.routes import register_routes
 from backend_server.utils.extensions import db
 from backend_server.services.celery_worker import init_celery
-from backend_server.services.socketio_ref import socketio  # <-- same instance everywhere
+from backend_server.services.socketio_ref import socketio
 
 jwt = JWTManager()
 migrate = Migrate()
@@ -34,13 +34,13 @@ def create_app():
     migrate.init_app(app, db)
     init_celery(app)
 
-    from backend_server.models.user import User  # ensure models registered
+    from backend_server.models.user import User
     with app.app_context():
         db.create_all()
 
     register_routes(app)
 
-    # bind the shared SocketIO instance to this Flask app
+    # bind SocketIO to Flask app
     socketio.init_app(app)
     return app
 

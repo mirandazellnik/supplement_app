@@ -1,9 +1,10 @@
-# backend_server/services/socketio_ref.py
+import os
 from flask_socketio import SocketIO
 
-# one, shared instance backed by Redis (works across processes)
+REDIS_URL = os.getenv("REDIS_URL")  # Provided by Railway
+
 socketio = SocketIO(
     cors_allowed_origins="*",
-    async_mode="eventlet",
-    message_queue="redis://localhost:6379/0",
+    async_mode="gevent",
+    message_queue=REDIS_URL,
 )
