@@ -45,23 +45,12 @@ def create_app():
     return app
 
 app = create_app()
+print("App created")
 
 @socketio.on("connect")
 def handle_connect(auth=None):
-    #print("Connect event fired, auth:", auth)
-    token = auth.get("token") if auth else None
-    if not token:
-        print("No token provided, rejecting")
-        return False
-    try:
-        decoded = decode_token(token)
-        user_id = str(decoded["sub"])
-        from flask_socketio import join_room
-        join_room(user_id)
-        print(f"User {user_id} connected to WebSocket")
-    except Exception as e:
-        print("Connect error:", e)
-        return False
+    print("SocketIO connect fired!", auth)
+    return True
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, use_reloader=False, debug=True)
