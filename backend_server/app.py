@@ -64,5 +64,4 @@ def handle_connect(auth=None):
         return False
 
 if __name__ == "__main__":
-    print("starting socketio")
     socketio.run(app, host="0.0.0.0", port=5000, use_reloader=False, debug=True)
