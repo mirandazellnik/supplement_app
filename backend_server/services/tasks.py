@@ -159,7 +159,7 @@ def compute_overall_rating(categories: list) -> float:
 def fetch_label_details(user_id, product_id):
     """
     Fetch the /label/{id} data and compute detailed ratings.
-    Emitted event: 'detailed_info' with payload:
+    Emitted event: 'lookup_update' with payload:
       {
         product_id: "...",
         rating: 4.2,
@@ -175,9 +175,9 @@ def fetch_label_details(user_id, product_id):
     except Exception as e:
         logger.exception("Failed to fetch label %s: %s", product_id, e)
         try:
-            socketio.emit("detailed_info_error", {"product_id": product_id, "error": str(e)}, room=user_id)
+            socketio.emit("lookup_update_error", {"product_id": product_id, "error": str(e)}, room=user_id)
         except Exception:
-            logger.exception("Failed to emit detailed_info_error")
+            logger.exception("Failed to emit lookup_update_error")
         return None
 
     # compute categories / rating
@@ -197,9 +197,9 @@ def fetch_label_details(user_id, product_id):
 
     # emit to the user's room
     try:
-        logger.info("Emitting detailed_info to room=%s", user_id)
-        socketio.emit("detailed_info", payload, room=user_id)
+        logger.info("Emitting lookup_update to room=%s", user_id)
+        socketio.emit("lookup_update", payload, room=user_id)
     except Exception as e:
-        logger.exception("Failed to emit detailed_info: %s", e)
+        logger.exception("Failed to emit lookup_update: %s", e)
 
     return None
