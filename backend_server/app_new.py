@@ -1,9 +1,12 @@
 # backend_server/app.py
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")  # allow frontend to connect
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 @app.route("/")
 def index():
@@ -19,4 +22,4 @@ def handle_disconnect():
 
 if __name__ == "__main__":
     print("starting socketio")
-    socketio.run(app, host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5000, use_reloader=False, debug=True)

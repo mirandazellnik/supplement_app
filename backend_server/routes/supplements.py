@@ -7,6 +7,7 @@ from backend_server.services.llm_client import ask_openrouter
 from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
 from backend_server.services.tasks import fetch_label_details
+from backend_server.config import Config
 
 NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
 
@@ -72,6 +73,26 @@ Please answer in JSON format like this:
 
     return response
 
+def preliminary_score_from_search(hit_source: dict) -> float:
+    """
+    Quick heuristic to produce a preliminary rating from the search-filter result.
+    Keep this cheap — used for immediate UI feedback.
+    """
+    score = 3.0
+    if hit_source.get("brandName"):
+        score += 0.3
+    if hit_source.get("productType") and hit_source["productType"].get("langualCodeDescription"):
+        score += 0.2
+    # if offMarket present in source -> penalize
+    if hit_source.get("offMarket"):
+        score -= 1.0
+    # if there are claims like 'Structure/Function' which are neutral -> small boost
+    claims = hit_source.get("claims") or []
+    for c in claims:
+        if c.get("langualCodeDescription") and "Structure/Function".lower() in c.get("langualCodeDescription").lower():
+            score += 0.2
+    return round(max(0.0, min(5.0, score)), 2)
+
 @supplements_bp.route("/lookup", methods=["POST"])
 @jwt_required()
 def lookup():
@@ -85,31 +106,43 @@ def lookup():
     try:
         # Query NIH DSLD API by UPC
         print(f"looking for", NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
-        response = requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
+        response = requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22", timeout=12)
         response.raise_for_status()
-        products = response.json().get("hits", [])
+        resp_json = response.json()
+        products = resp_json.get("hits", [])
 
         if not products:
             return jsonify({"error": "No product found"}), 404
 
         # Immediately return initial info to frontend
-        initial_info = []
-        for product in products:
-            p = product["_source"]
-            initial_info.append({
-                "id": product["_id"],
-                "name": p.get("fullName"),
-                "brand": p.get("brandName"),
-                "image": p.get("thumbnail"),
-                "netContents": p.get("netContents"),
-                "claims": p.get("claims")
-            })
+        product = products[0]  # take first match
 
-            # Trigger background task to fetch /label details
-            fetch_label_details.delay(user_id, product["_id"])
+        _id = product.get("_id")
+        p = product.get("_source", {})
+        prelim = preliminary_score_from_search(p)
+        initial_info = {
+            "id": str(_id),
+            "name": p.get("fullName"),
+            "brand": p.get("brandName"),
+            "image": p.get("thumbnail"),          # often filename; convert to full URL in frontend if needed
+            "netContents": p.get("netContents"),
+            "claims": p.get("claims"),
+            "preliminary_rating": prelim,
+            "fetching_more": True
+        }
 
-        return jsonify({"products": initial_info})
+        # Trigger background task to fetch /label details
+        try:
+            fetch_label_details.delay(str(user_id), str(_id))
+        except Exception as e:
+            # if Celery is not available, still continue (optionally do synchronous fallback)
+            print("Warning: failed to queue background task:", e)
+
+        return jsonify(initial_info)
 
     except requests.RequestException as e:
         print("Error querying NIH API:", e)
         return jsonify({"error": str(e)}), 500
+    except ValueError as ve:
+        print("JSON decode error:", ve)
+        return jsonify({"error": "Invalid response from NIH API"}), 500

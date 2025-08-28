@@ -1,5 +1,7 @@
 import axios from "axios";
 import io from "socket.io-client";
+import { getToken } from "../util/storage";
+
 
 const BASE_URL = require("./api_url.json").local_api_url;
 const API_URL = BASE_URL + "/api/supplements";
@@ -7,7 +9,8 @@ const API_URL = BASE_URL + "/api/supplements";
 let socket; // global socket reference
 
 // --- LOOKUP FUNCTION ---
-export async function lookup(upc, token) {
+export async function lookup(upc) {
+  const token = await getToken();
   try {
     const res = await axios.post(
       `${API_URL}/lookup`,

@@ -26,7 +26,8 @@ export default function QRScanner() {
   const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
     if (!scanned) {
       setScanned(true);
-      setUpc(data);
+      //setUpc(data);
+      setUpc("863897000085")
       sheetRef.current?.snapToIndex(0);
     }
   };
