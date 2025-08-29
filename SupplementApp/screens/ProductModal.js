@@ -93,8 +93,8 @@ const ProductScreen = ({ upc }) => {
     
       socket.on("connect", () => console.log("Socket connected"));
       
-      socket.on("detailed_info", (data) => {
-        console.log("Received detailed info:", data);
+      socket.on("lookup_update", (data) => {
+        console.log("Received lookup_update:", data);
 
         if (data?.categories?.length) {
           setCategories(data.categories);

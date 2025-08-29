@@ -1,5 +1,10 @@
 #import eventlet
 #eventlet.monkey_patch()
+import sys
+if sys.platform == "win32":  # only patch on Windows
+    print("Patching for Windows")
+    import gevent.monkey
+    gevent.monkey.patch_all()
 
 from flask import Flask, jsonify
 from flask_cors import CORS

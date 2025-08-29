@@ -1,7 +1,7 @@
 import os
 from celery import Celery
 
-REDIS_URL = os.getenv("REDIS_URL")  # Provided by Railway
+REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"  # Provided by Railway
 
 celery = Celery(
     "tasks",
