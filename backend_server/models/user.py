@@ -1,6 +1,7 @@
-from app import db
 from passlib.hash import bcrypt
 from sqlalchemy.types import JSON
+
+from backend_server.utils.extensions import db
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)

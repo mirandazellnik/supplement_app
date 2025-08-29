@@ -27,6 +27,7 @@ export default function QRScanner() {
     if (!scanned) {
       setScanned(true);
       setUpc(data);
+      //setUpc("863897000085")
       sheetRef.current?.snapToIndex(0);
     }
   };
