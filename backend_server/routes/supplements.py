@@ -8,6 +8,7 @@ from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
 from backend_server.services.tasks import fetch_label_details, recommend_similar_products
 from backend_server.config import Config
+from backend_server.utils import api_requests
 
 NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
 
@@ -69,7 +70,7 @@ def lookup():
     try:
         # Query NIH DSLD API by UPC
         print(f"looking for", NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
-        response = requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22", timeout=12)
+        response = api_requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22", timeout=15)
         response.raise_for_status()
         resp_json = response.json()
         products = resp_json.get("hits", [])

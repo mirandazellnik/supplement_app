@@ -13,3 +13,4 @@ redis>=6.0.0
 flask_socketio==5.3.7
 gevent==25.5.1
 psycopg2-binary==2.9.9
+requests_cache==0.9.8
