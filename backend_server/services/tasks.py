@@ -3,9 +3,11 @@ from .celery_worker import celery
 import requests
 import math
 import logging
+import json
 
 # shared socketio reference (the one you already created in socketio_ref)
 from backend_server.services.socketio_ref import socketio
+from backend_server.services.gpt_service import fetch_similar_products
 
 logger = logging.getLogger(__name__)
 
@@ -201,5 +203,43 @@ def fetch_label_details(user_id, product_id):
         socketio.emit("lookup_update", payload, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit lookup_update: %s", e)
+
+    return None
+
+@celery.task
+def recommend_similar_products(user_id, product_id, product_name, brand_name):
+    """
+    Recommend similar products based on the given product ID.
+    Emitted event: 'recommend_similar_products' with payload:
+      {
+        user_id: "...",
+        product_id: "...",
+        recommendations: [{id, name, image, ...}, ...]
+      }
+    """
+    try:
+        logger.info("Recommending similar products for id=%s (emit to room=%s)", product_id, user_id)
+        # Fetch similar products from your recommendation engine
+        recommendations = fetch_similar_products(product_name, brand_name)
+        try:
+            recommendations = json.loads(recommendations)
+        except json.JSONDecodeError as e:
+            logger.exception("Failed to parse recommendations JSON: %s", e)
+            socketio.emit("recommend_similar_products_error", {"product_id": product_id, "error": "Invalid recommendations format"}, room=user_id)
+            return None
+    except Exception as e:
+        logger.exception("Failed to recommend similar products for %s: %s", product_id, e)
+        try:
+            socketio.emit("recommend_similar_products_error", {"product_id": product_id, "error": str(e)}, room=user_id)
+        except Exception:
+            logger.exception("Failed to emit recommend_similar_products_error")
+        return None
+
+    # Emit recommendations to the user's room
+    try:
+        logger.info("Emitting recommend_similar_products to room=%s", user_id)
+        socketio.emit("recommend_similar_products", recommendations, room=user_id)
+    except Exception as e:
+        logger.exception("Failed to emit recommend_similar_products: %s", e)
 
     return None

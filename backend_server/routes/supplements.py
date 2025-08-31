@@ -2,11 +2,11 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import requests
 
-from backend_server.services.gpt_service import analyze_supplements
+from backend_server.services.gpt_service import analyze_supplements, recommend_supplement_by_question
 from backend_server.services.llm_client import ask_openrouter
 from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
-from backend_server.services.tasks import fetch_label_details
+from backend_server.services.tasks import fetch_label_details, recommend_similar_products
 from backend_server.config import Config
 
 NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
@@ -31,44 +31,7 @@ def recommend():
     if not question:
         return jsonify({"error": "Missing question"}), 400
 
-    # Search vector DB for relevant docs
-    docs = vector_search(question, top_k=5)
-
-    # Build context string from docs
-    context = "\n\n".join([doc["text"] for doc in docs])
-
-    print(f"context: {context}")
-
-    # Ask OpenRouter LLM with context + question
-    prompt = f"""
-You are a helpful assistant providing supplement recommendations based on trusted wellness documents.
-
-Context:
-{context}
-
-User question:
-{question}
-
-Please answer in JSON format like this:
-{{
-  "recommendations": [
-    {{"name": "Vitamin D", "rating": 4.5, "link": "https://example.com/vitamin-d"}},
-    {{"name": "Magnesium", "rating": 4.0, "link": "https://example.com/magnesium"}}
-  ]
-}}
-"""
-
-    
-    # TEMPORARY: USE FIXED RESPONSE
-    response = """{
-  "recommendations": [
-    {"name": "Magnesium Citrate", "rating": 4.5, "link": "https://example.com/magnesium-citrate"},
-    {"name": "Magnesium Glycinate", "rating": 4.7, "link": "https://example.com/magnesium-glycinate"},
-    {"name": "Magnesium Oxide", "rating": 4.0, "link": "https://example.com/magnesium-oxide"}
-  ]
-}"""
-
-    response = ask_openrouter(prompt)
+    response = recommend_supplement_by_question(question)
     print(response)
 
     return response
@@ -134,6 +97,7 @@ def lookup():
         # Trigger background task to fetch /label details
         try:
             fetch_label_details.delay(str(user_id), str(_id))
+            recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
         except Exception as e:
             # if Celery is not available, still continue (optionally do synchronous fallback)
             print("Warning: failed to queue background task:", e)
