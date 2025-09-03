@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
-import { View, Text, BackHandler } from "react-native";
+import { View, Text, BackHandler, StyleSheet } from "react-native";
 import { Camera, CameraView } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet from "@gorhom/bottom-sheet";
@@ -23,7 +23,6 @@ export default function QRScanner() {
 
   // Request camera permission
   useEffect(() => {
-    console.log("Requesting camera permission");
     Camera.requestCameraPermissionsAsync().then(res => {
       setHasCameraPermission(res.status === "granted");
     });
@@ -35,21 +34,14 @@ export default function QRScanner() {
       setScanned(true);
       setUpc(data);
       sheetRef.current?.snapToIndex(0);
-
-      // Push a dummy stack entry so back button targets modal first
-      // navigation.push("QRScannerModalOpen");
     }
   };
 
-  // Close BottomSheet & pop dummy navigation entry
+  // Close BottomSheet
   const handleCloseSheet = useCallback(() => {
     sheetRef.current?.close();
     setScanned(false);
-
-    if (navigation.canGoBack()) {
-      //navigation.goBack(); // remove dummy route
-    }
-  }, [navigation]);
+  }, []);
 
   // Track BottomSheet index
   const handleSheetChange = useCallback((index: number) => {
@@ -61,10 +53,10 @@ export default function QRScanner() {
     useCallback(() => {
       const onBackPress = () => {
         if (sheetIndex >= 0) {
-          handleCloseSheet(); // close modal first
-          return true; // prevent default
+          handleCloseSheet();
+          return true;
         }
-        return false; // allow normal back behavior (switch tab, etc.)
+        return false;
       };
 
       const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
@@ -90,9 +82,15 @@ export default function QRScanner() {
         />
       )}
 
+      {/* Overlay rectangle + text */}
+      <View style={styles.overlayContainer} pointerEvents="none">
+        <View style={styles.rectangle} />
+        <Text style={styles.overlayText}>Align barcode here</Text>
+      </View>
+
       <BottomSheet
         ref={sheetRef}
-        index={-1} // initially closed
+        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose
         onClose={handleCloseSheet}
@@ -103,3 +101,29 @@ export default function QRScanner() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  overlayContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rectangle: {
+    width: "70%",   // takes 70% of screen width
+    aspectRatio: 1.5, // keeps rectangle proportional (width:height)
+    borderWidth: 2,
+    borderColor: "white",
+    borderStyle: "dashed",
+    borderRadius: 8,
+  },
+  overlayText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "white",
+    fontWeight: "600",
+  },
+});

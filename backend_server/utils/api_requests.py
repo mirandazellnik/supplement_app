@@ -2,6 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 import requests_cache
 import logging
+from ratelimit import limits, sleep_and_retry
 
 # ---- Configure caching ----
 requests_cache.install_cache("api_cache", expire_after=3600)  # 1 hour cache
@@ -41,3 +42,16 @@ def get(url, params=None, timeout=15, use_cache=True):
     except requests.RequestException as e:
         logging.error(f"[API_CLIENT] {url} Request failed: {e}")
         return None
+
+# 100 requests per minute
+ONE_MINUTE = 60
+
+@sleep_and_retry
+@limits(calls=100, period=ONE_MINUTE)
+def limited_get(url, **kwargs):
+    response = get(url, **kwargs)
+    if response.status_code == 429:
+        # API explicitly says "too many requests"
+        # you could add custom handling/backoff here
+        raise Exception("Rate limit hit")
+    return response
