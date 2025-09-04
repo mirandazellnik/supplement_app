@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bluezone.bluezone",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to scan product barcodes and allow users to add supplements."
       }
     },
     "android": {

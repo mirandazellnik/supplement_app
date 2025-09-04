@@ -8,12 +8,13 @@ import {
   Image,
   Platform,
   Animated,
+  ScrollView
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { login as apiLogin } from "../api/auth";
 import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+//import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
 
 export default function LoginScreen({ navigation, email }) {
@@ -74,7 +75,7 @@ export default function LoginScreen({ navigation, email }) {
         />
       </View>
 
-      <KeyboardAwareScrollView
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -132,7 +133,7 @@ export default function LoginScreen({ navigation, email }) {
         >
           <Text style={styles.linkText}>Forgot password?</Text>
         </TouchableOpacity>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </LinearGradient>
   );
 }

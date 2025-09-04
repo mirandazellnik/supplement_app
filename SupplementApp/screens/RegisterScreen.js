@@ -8,12 +8,13 @@ import {
   Image,
   Platform,
   Animated,
+  ScrollView
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { login as apiLogin, register } from "../api/auth";
 import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+//import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
 
 export default function RegisterScreen({ navigation, email }) {
@@ -86,7 +87,7 @@ export default function RegisterScreen({ navigation, email }) {
         />
       </View>
 
-      <KeyboardAwareScrollView
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -159,7 +160,7 @@ export default function RegisterScreen({ navigation, email }) {
             {loading ? "Registering..." : "Register"}
           </Text>
         </TouchableOpacity>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </LinearGradient>
   );
 }

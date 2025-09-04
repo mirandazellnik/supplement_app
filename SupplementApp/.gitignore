@@ -35,6 +35,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-# api url
-api_url.json

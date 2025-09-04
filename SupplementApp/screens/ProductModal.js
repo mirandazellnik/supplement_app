@@ -14,13 +14,13 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookup } from "../api/supplements";
+import { lookup, disconnectSocket, connectSocket } from "../api/supplements";
 import { io } from "socket.io-client";
-import { getToken } from "../util/storage";
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   FlatList
 } from 'react-native-gesture-handler';
+import { AuthContext } from "../contexts/AuthContext";
 
 const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
@@ -44,6 +44,7 @@ const ProductScreen = ({ upc, sheetRef }) => {
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
   const scanningRef = useRef(false);
+  const { userToken } = React.useContext(AuthContext);
 
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState(CATEGORIES_PLACEHOLDER);
@@ -51,6 +52,34 @@ const ProductScreen = ({ upc, sheetRef }) => {
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+
+  useEffect(() => {
+    // connect socket on mount
+    connectSocket(userToken,
+      (data) => {
+        if (data?.categories?.length) {
+          setCategories(data.categories);
+        }
+        if (data?.rating) {
+          setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
+        }
+
+        setLoadingCategories(false);
+      },
+      (error) => {console.error("Socket error:", error);},
+      (data) => {
+        if (data?.recommendations) {
+          setSimilarProducts(data.recommendations);
+        }
+      },
+      (similarError) => {console.error("Similar products error:", similarError);}
+    );
+  
+    return () => {
+      disconnectSocket();
+    };
+    }, [upc]
+  );
 
   // Reset state when UPC changes
   useEffect(() => {
@@ -93,53 +122,6 @@ const ProductScreen = ({ upc, sheetRef }) => {
     }
 
     fetchProductDetails();
-  }, [upc]);
-
-  // Socket.IO for detailed info + similar products
-  useEffect(() => {
-    if (!upc) return;
-
-    let socket;
-
-    async function setupSocket() {
-      let token = await getToken();
-      socket = io("http://192.168.3.196:5000", {
-        transports: ["websocket"],
-        auth: { token: token },
-      });
-    
-      socket.on("connect", () => console.log("Socket connected"));
-      
-      socket.on("lookup_update", (data) => {
-        console.log("Received lookup_update:", data);
-
-        if (data?.categories?.length) {
-          setCategories(data.categories);
-        }
-        if (data?.rating) {
-          setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
-        }
-
-        setLoadingCategories(false);
-      });
-
-      socket.on("lookup_update_error", (err) => {
-        console.error("Lookup update error:", err);
-      });
-
-      socket.on("recommend_similar_products", (data) => {
-        console.log("Received recommend_similar_products:", data); 
-        if (data?.recommendations) {
-          setSimilarProducts(data.recommendations);
-        }
-      });
-
-      socket.on("disconnect", () => console.log("Socket disconnected"));
-    }
-
-    setupSocket();
-
-    return () => socket?.disconnect();
   }, [upc]);
 
   const toggleExpand = (id) => {

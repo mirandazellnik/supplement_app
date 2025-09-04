@@ -1,8 +1,7 @@
 {
   "expo": {
-    "jsEngine": "jsc",
-    "name": "SupplementApp",
-    "slug": "SupplementApp",
+    "name": "BlueZone",
+    "slug": "newtest",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bluezone.ai.newtest",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to scan product barcodes and allow users to add supplements."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +29,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d9769eb5-54a1-409a-99d7-dbada7276fbf"
+      }
+    },
+    "owner": "testbuilder142"
   }
 }

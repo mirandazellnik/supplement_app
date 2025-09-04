@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import { getToken } from "../util/storage";
 
 
-const BASE_URL = require("./api_url.json").local_api_url;
+const BASE_URL = require("./api_url.json").api_url;
 const API_URL = BASE_URL + "/api/supplements";
 
 let socket; // global socket reference
@@ -30,7 +30,8 @@ export async function lookup(upc) {
 }
 
 // --- CONNECT TO SOCKET ---
-export function connectSocket(token, onUpdate) {
+export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError) {
+  console.log("Connecting to socket with token:", token);
   if (!socket) {
     socket = io(BASE_URL, {
       auth: { token },  // send JWT if backend checks auth
@@ -53,9 +54,21 @@ export function connectSocket(token, onUpdate) {
 
     socket.on("lookup_update_error", (err) => {
       console.error("⚠️ Lookup update error:", err);
+      onError(err);
+    });
+
+    socket.on("recommend_similar_products", (data) => {
+      console.log("📦 Received similar products:", data);
+      onSimilar(data); // pass similar products to frontend UI
+    });
+
+    socket.on("recommend_similar_products_error", (err) => {
+      console.error("⚠️ Similar products error:", err);
+      onSimilarError(err);
     });
   }
 }
+
 
 // --- DISCONNECT SOCKET ---
 export function disconnectSocket() {
