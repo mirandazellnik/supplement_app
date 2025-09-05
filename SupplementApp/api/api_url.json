@@ -1,4 +1,4 @@
 {
-    "api_url":"https://web-production-349e.up.railway.app",
+    "api_url":"http://192.168.3.196:5000",
     "local_api_url":"http://192.168.3.196:5000"
 }

@@ -82,10 +82,21 @@ export default function QRScanner() {
         />
       )}
 
+      {/* Dim overlay when scanned */}
+      {scanned && (
+        <View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(0,0,0,0.5)', // 50% dim
+          }}
+          pointerEvents="none" // allow touches to pass through if needed
+        />
+      )}
+
       {/* Overlay rectangle + text */}
       <View style={styles.overlayContainer} pointerEvents="none">
-        <View style={styles.rectangle} />
-        <Text style={styles.overlayText}>Align barcode here</Text>
+        <View style={[styles.rectangle, {borderColor: !scanned ? "white" : "grey"}]} />
+        <Text style={[styles.overlayText, {color: !scanned ? "white" : "grey"}]}>{!scanned ? "Align barcode here" : "Barcode scanned!"}</Text>
       </View>
 
       <BottomSheet
@@ -116,7 +127,6 @@ const styles = StyleSheet.create({
     width: "70%",   // takes 70% of screen width
     aspectRatio: 1.5, // keeps rectangle proportional (width:height)
     borderWidth: 2,
-    borderColor: "white",
     borderStyle: "dashed",
     borderRadius: 8,
   },

@@ -16,6 +16,7 @@ import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
 //import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
+import KeyboardScrollView from "../components/KeyboardScrollView";
 
 export default function LoginScreen({ navigation, email }) {
   const [password, setPassword] = useState("");
@@ -75,7 +76,7 @@ export default function LoginScreen({ navigation, email }) {
         />
       </View>
 
-      <ScrollView
+      <KeyboardScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -133,7 +134,7 @@ export default function LoginScreen({ navigation, email }) {
         >
           <Text style={styles.linkText}>Forgot password?</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardScrollView>
     </LinearGradient>
   );
 }

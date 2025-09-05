@@ -16,6 +16,7 @@ import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
 //import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
+import KeyboardScrollView from "../components/KeyboardScrollView";
 
 export default function RegisterScreen({ navigation, email }) {
   const [firstName, setFirstName] = useState("");
@@ -87,7 +88,7 @@ export default function RegisterScreen({ navigation, email }) {
         />
       </View>
 
-      <ScrollView
+      <KeyboardScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -160,7 +161,7 @@ export default function RegisterScreen({ navigation, email }) {
             {loading ? "Registering..." : "Register"}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardScrollView>
     </LinearGradient>
   );
 }

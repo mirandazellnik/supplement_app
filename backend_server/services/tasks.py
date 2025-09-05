@@ -4,12 +4,14 @@ import requests
 import math
 import logging
 import json
+import time
 
 # shared socketio reference (the one you already created in socketio_ref)
 from backend_server.services.socketio_ref import socketio
 from backend_server.services.gpt_service import fetch_similar_products
 from backend_server.utils import api_requests
 from backend_server.services.rating_calculators import nih_dsld
+from backend_server.utils.socket_emit import emit_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ def fetch_label_details(user_id, product_id):
 
     # emit to the user's room
     try:
+        #time.sleep(1)
         logger.info("Emitting lookup_update to room=%s", user_id)
         socketio.emit("lookup_update", payload, room=user_id)
     except Exception as e:

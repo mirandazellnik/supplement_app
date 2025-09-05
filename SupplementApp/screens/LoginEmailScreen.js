@@ -8,12 +8,13 @@ import {
   Image,
   Platform,
   Animated,
-  ScrollView
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 //import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
 import { check_whether_user_exists } from "../api/auth";
+import KeyboardScrollView from "../components/KeyboardScrollView";
  
 export default function LoginEmailScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -75,7 +76,7 @@ export default function LoginEmailScreen({ navigation }) {
         />
       </View>
 
-      <ScrollView
+      <KeyboardScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -119,7 +120,7 @@ export default function LoginEmailScreen({ navigation }) {
             {loading ? "Continuing..." : "Continue"}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardScrollView>
     </LinearGradient>
   );
 }

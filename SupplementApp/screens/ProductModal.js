@@ -15,8 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { lookup, disconnectSocket, connectSocket } from "../api/supplements";
-import { io } from "socket.io-client";
-import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   FlatList
 } from 'react-native-gesture-handler';
@@ -52,6 +50,9 @@ const ProductScreen = ({ upc, sheetRef }) => {
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+  const [notFound, setNotFound] = useState(false);
+  const [recFailed, setRecFailed] = useState(false);
+  const [categoriesFailed, setCategoriesFailed] = useState(false);
 
   useEffect(() => {
     // connect socket on mount
@@ -89,6 +90,9 @@ const ProductScreen = ({ upc, sheetRef }) => {
     setSimilarProducts([]);
     setLoadingProduct(true);
     setLoadingCategories(true);
+    setNotFound(false);
+    setCategoriesFailed(false);
+    setRecFailed(false);
   }, [upc]);
 
   // Fetch initial product info via REST
@@ -115,6 +119,7 @@ const ProductScreen = ({ upc, sheetRef }) => {
           image: require("../assets/images/vitamin-c.png"),
           rating: 0,
         });
+        setNotFound(true);
       } finally {
         setLoadingProduct(false);
         setTimeout(() => (scanningRef.current = false), 600);
@@ -197,8 +202,8 @@ const ProductScreen = ({ upc, sheetRef }) => {
       />
 
       {/* Categories */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-      {loadingCategories ? (
+      {notFound ? null : <Text style={styles.sectionTitle}>Categories</Text>}
+      {loadingCategories ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> : (
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text>Fetching more detailed information...</Text>
@@ -236,9 +241,10 @@ const ProductScreen = ({ upc, sheetRef }) => {
         })
       )}
       {/* Similar products */}
+      {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
+      {recFailed && <Text>Unable to load similar products at this time.</Text>}
       {similarProducts.length > 0 && (
         <>
-          <Text style={styles.sectionTitle}>Similar Products</Text>
           <FlatList
             data={similarProducts}
             horizontal

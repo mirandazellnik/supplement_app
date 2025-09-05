@@ -1,12 +1,27 @@
-import React, { useState, useRef } from "react";
-import { Animated, View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Animated,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
+import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { lookup, disconnectSocket, connectSocket } from "../api/supplements";
+import {
+  FlatList,
+  ScrollView
+} from 'react-native-gesture-handler';
+import { AuthContext } from "../contexts/AuthContext";
 
-const essentials = [
+const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
   { id: "2", name: "Zinc" },
   { id: "3", name: "Magnesium" },
@@ -14,7 +29,7 @@ const essentials = [
   { id: "5", name: "Iron" },
 ];
 
-const categories = [
+const CATEGORIES_PLACEHOLDER = [
   { id: "1", name: "Purity", rating: "Good", detail: "Third-party tested for purity and quality." },
   { id: "2", name: "Potency", rating: "Okay", detail: "Label-accurate and high bio-availability." },
   { id: "3", name: "Additives", rating: "Great", detail: "Few or no additives or fillers." },
@@ -24,17 +39,107 @@ const categories = [
   { id: "7", name: "Environmental", rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
 ];
 
-const ProductScreen = ({ navigation }) => {
+const ProductScreen = ({  }) => {
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
+  const scanningRef = useRef(false);
+  const { userToken } = React.useContext(AuthContext);
+  const [upc, setUpc] = useState("829835006489")
+
+  const [product, setProduct] = useState(null);
+  const [categories, setCategories] = useState(CATEGORIES_PLACEHOLDER);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(true);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+  const [notFound, setNotFound] = useState(false);
+  const [recFailed, setRecFailed] = useState(false);
+  const [categoriesFailed, setCategoriesFailed] = useState(false);
+
+  useEffect(() => {
+    // connect socket on mount
+    connectSocket(userToken,
+      (data) => {
+        if (data?.categories?.length) {
+          setCategories(data.categories);
+        }
+        if (data?.rating) {
+          setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
+        }
+
+        setLoadingCategories(false);
+      },
+      (error) => {console.error("Socket error:", error); setLoadingCategories(false);},
+      (data) => {
+        if (data?.recommendations) {
+          setSimilarProducts(data.recommendations);
+        }
+        setLoadingRecs(false);
+      },
+      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);}
+    );
+  
+    return () => {
+      disconnectSocket();
+    };
+    }, [upc]
+  );
+
+  // Reset state when UPC changes
+  useEffect(() => {
+    if (!upc) return;
+    setProduct(null);
+    setCategories([]);
+    setSimilarProducts([]);
+
+    setLoadingProduct(true);
+    setLoadingCategories(true);
+    setLoadingRecs(true);
+
+    setNotFound(false);
+    setCategoriesFailed(false);
+    setRecFailed(false);
+  }, [upc]);
+
+  // Fetch initial product info via REST
+  useEffect(() => {
+    if (!upc || scanningRef.current) return;
+    scanningRef.current = true;
+
+    async function fetchProductDetails() {
+      try {
+        console.log("Fetching product details for UPC:", upc);
+        const result = await lookup(upc);
+
+        setProduct({
+          name: result?.name || "Unknown Product",
+          image: result?.image || require("../assets/images/vitamin-c.png"),
+          rating: result?.rating || 0,
+        });
+
+        console.log("Initial product data:", result);
+      } catch (e) {
+        console.warn("Failed to fetch product:", e);
+        setProduct({
+          name: "Unknown Product",
+          image: require("../assets/images/vitamin-c.png"),
+          rating: 0,
+        });
+        setNotFound(true);
+      } finally {
+        setLoadingProduct(false);
+        setTimeout(() => (scanningRef.current = false), 600);
+      }
+    }
+
+    fetchProductDetails();
+  }, [upc]);
 
   const toggleExpand = (id) => {
     setExpanded((prev) => {
       const next = { ...prev, [id]: !prev[id] };
-      // Animate open/close
-      if (!anims[id]) {
-        anims[id] = new Animated.Value(prev[id] ? 1 : 0);
-      }
+      if (!anims[id]) anims[id] = new Animated.Value(prev[id] ? 1 : 0);
       Animated.timing(anims[id], {
         toValue: next[id] ? 1 : 0,
         duration: 250,
@@ -44,52 +149,32 @@ const ProductScreen = ({ navigation }) => {
     });
   };
 
-  // Add this helper function for dot color:
   const getDotColor = (rating) => {
+    if (!rating) return "#B0B0B0";
     switch (rating.toLowerCase()) {
-      case "great":
-        return "#1B873B"; // dark green
-      case "good":
-        return "#6DD47E"; // light green
-      case "okay":
-        return "#FFA500"; // orange
-      case "bad":
-        return "#FF3B30"; // red
-      case "medium":
-        return "#FFD966"; // yellowish for "Medium"
-      case "high":
-        return "#1B87B8"; // blue for "High"
-      case "low":
-        return "#B81B1B"; // dark red for "Low"
-      default:
-        return "#B0B0B0"; // neutral gray fallback
+      case "great": return "#1B873B";
+      case "good": return "#6DD47E";
+      case "okay": return "#FFA500";
+      case "bad": return "#FF3B30";
+      default: return "#B0B0B0";
     }
   };
 
-  const product = {
-    name: "Super Immune Boost",
-    image: require("../assets/images/vitamin-c.png"), // Replace with your image
-    rating: 4.4,
-  };
-
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Ionicons
-          key={i}
-          name={i <= Math.floor(rating) ? "star" : rating >= i - 0.5 ? "star-half" : "star-outline"}
-          size={20}
-          color={colors.primary}
-        />
-      );
-    }
-    return stars;
-  };
+  // Still loading product? Show spinner
+  if (loadingProduct || !product) {
+    return (
+      <ScrollView contentContainerStyle={{ padding: spacing.lg }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.lg }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ marginTop: spacing.md, color: colors.textSecondary }}>Loading product...</Text>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Top section: Product image, name, stars, and purchase button */}
+    <ScrollView contentContainerStyle={{ padding: spacing.lg }} nestedScrollEnabled>
+      {/* Top section */}
       <View style={styles.topRow}>
         <Image source={product.image} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>
@@ -99,7 +184,7 @@ const ProductScreen = ({ navigation }) => {
               <StarRating rating={product.rating} size={20} gap={2} />
               <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
             </View>
-            <TouchableOpacity style={styles.purchaseIconButton} onPress={() => {/* navigation to purchase */}}>
+            <TouchableOpacity style={styles.purchaseIconButton}>
               <Ionicons name="cart-outline" size={24} color={colors.primary} />
               <Text style={styles.buyText}>BUY</Text>
             </TouchableOpacity>
@@ -108,220 +193,127 @@ const ProductScreen = ({ navigation }) => {
       </View>
 
       {/* Essentials */}
-      <Text style={styles.sectionTitle}>Essentials</Text>
-      <View style={styles.essentialsContainer}>
+        <Text style={styles.sectionTitle}>Essentials</Text>
         <FlatList
-          data={essentials}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingVertical: spacing.sm, paddingHorizontal: spacing.sm }}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.essentialItem} onPress={() => {/* navigation to chemical page */}}>
-              <Text style={styles.essentialText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+        data={ESSENTIALS_PLACEHOLDER}
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingVertical: spacing.sm }}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.essentialItem}>
+            <Text style={styles.essentialText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+      />
 
-{/* Categories */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-      {categories.map((cat) => {
-        if (!anims[cat.id]) anims[cat.id] = new Animated.Value(0);
-        return (
-          <View key={cat.id} style={styles.categoryContainer}>
-            <TouchableOpacity style={styles.categoryHeader} onPress={() => toggleExpand(cat.id)}>
-              <Text style={styles.categoryName}>{cat.name}</Text>
-              <View style={styles.categoryRatingRow}>
-                <Text style={styles.categoryRating}>{cat.rating}</Text>
-                <View
-                  style={[
-                    styles.ratingDot,
-                    { backgroundColor: getDotColor(cat.rating) },
-                  ]}
+      {/* Categories */}
+      {notFound ? null : <Text style={styles.sectionTitle}>Categories</Text>}
+      {loadingCategories ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> : (
+        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Fetching more detailed information...</Text>
+        </View>
+      ) : (
+        categories.map((cat, idx) => {
+          if (!anims[idx]) anims[idx] = new Animated.Value(0);
+          return (
+            <View key={idx} style={styles.categoryContainer}>
+              <TouchableOpacity
+                style={styles.categoryHeader}
+                onPress={() => toggleExpand(idx)}
+              >
+                <Text style={styles.categoryName}>{cat.name}</Text>
+                <View style={styles.categoryRatingRow}>
+                  <Text style={styles.categoryRating}>{cat.rating}</Text>
+                  <View
+                    style={[styles.ratingDot, { backgroundColor: getDotColor(cat.rating) }]}
+                  />
+                </View>
+              </TouchableOpacity>
+              <Animated.View
+                style={{
+                  overflow: "hidden",
+                  height: anims[idx].interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
+                  opacity: anims[idx],
+                }}
+              >
+                <View style={styles.categoryDetail}>
+                  <Text style={styles.categoryDetailText}>{cat.detail || ""}</Text>
+                </View>
+              </Animated.View>
+            </View>
+          );
+        })
+      )}
+      {/* Similar products */}
+      {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
+      {categoriesFailed && <Text>Unable to load similar products at this time.</Text>}
+      {loadingRecs ? (
+        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Fetching recommended products...</Text>
+        </View>
+      ) :
+      (similarProducts.length > 0 && (
+        <>
+          <FlatList
+            data={similarProducts}
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.upc}
+            contentContainerStyle={{ paddingVertical: spacing.sm }}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.similarItem}>
+                <Image
+                  source={require("../assets/images/vitamin-c.png")} 
+                  style={styles.similarImage}
                 />
-                <Ionicons
-                  name={expanded[cat.id] ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </View>
-            </TouchableOpacity>
-            <Animated.View
-              style={{
-                overflow: "hidden",
-                height: anims[cat.id].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 60],
-                }),
-                opacity: anims[cat.id],
-              }}
-            >
-              <View style={styles.categoryDetail}>
-                <Text style={styles.categoryDetailText}>{cat.detail}</Text>
-              </View>
-            </Animated.View>
-          </View>
-        );
-      })}
+                <Text style={styles.similarName} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.similarManufacturer} numberOfLines={1}>
+                  {item.manufacturer}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      ))}
+
     </ScrollView>
   );
 };
 
-
-const ESSENTIAL_ITEM_WIDTH = 110;
-const ESSENTIAL_ITEM_HEIGHT = 54;
-
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-    flex: 1,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  productImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 16,
-    marginRight: spacing.md,
-    backgroundColor: colors.surface,
-  },
-  titleStarsContainer: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-  },
-  productName: {
-    ...typography.h2,
-    color: colors.textPrimary,
-    fontWeight: "bold",
-    flexShrink: 1,
-    marginBottom: 2,
-  },
-  starsAndButtonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 2,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  ratingText: {
-    marginLeft: 8,
-    color: colors.textSecondary,
-    fontSize: 16,
-    fontWeight: "500",
-  },
- purchaseIconButton: {
-    flexDirection: "row", // add this for icon + text
-    alignItems: "center",
-    marginLeft: 18,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.10,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  buyText: {
-    color: colors.primary,
-    fontWeight: "bold",
-    fontSize: 16,
-    marginLeft: 6,
-    letterSpacing: 1,
-  },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-    fontWeight: "bold",
-  },
-  essentialsContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.lg,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  essentialItem: {
-    backgroundColor: colors.background,
-    borderRadius: 16,
-    width: ESSENTIAL_ITEM_WIDTH,
-    height: ESSENTIAL_ITEM_HEIGHT,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: spacing.md,
-    marginVertical: spacing.xs,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  essentialText: {
-    color: colors.textPrimary,
-    fontWeight: "700",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  categoryContainer: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    marginBottom: spacing.sm,
-    overflow: "hidden",
-    elevation: 1,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: spacing.md,
-  },
-  categoryName: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  categoryRatingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  categoryRating: {
-    color: colors.primary,
-    fontWeight: "bold",
-    marginRight: 6,
-    fontSize: 15,
-  },
-  ratingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-    marginLeft: 0,
-  },
-  categoryDetail: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  categoryDetailText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 20,
-  },
+  topRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.md },
+  productImage: { width: 70, height: 70, borderRadius: 16, marginRight: spacing.md, backgroundColor: colors.surface },
+  titleStarsContainer: { flex: 1, flexDirection: "column", justifyContent: "center" },
+  productName: { ...typography.h2, color: colors.textPrimary, fontWeight: "bold", flexShrink: 1, marginBottom: 2 },
+  starsAndButtonRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
+  ratingRow: { flexDirection: "row", alignItems: "center" },
+  ratingText: { marginLeft: 8, color: colors.textSecondary, fontSize: 16, fontWeight: "500" },
+  purchaseIconButton: { flexDirection: "row", alignItems: "center", marginLeft: 18, backgroundColor: "#fff", borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, elevation: 2 },
+  buyText: { color: colors.primary, fontWeight: "bold", fontSize: 16, marginLeft: 6 },
+  sectionTitle: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.sm, fontWeight: "bold" },
+  essentialItem: { backgroundColor: colors.background, borderRadius: 16, width: 110, height: 54, justifyContent: "center", alignItems: "center", marginRight: spacing.md, marginVertical: spacing.xs, elevation: 1 },
+  essentialText: { color: colors.textPrimary, fontWeight: "700", fontSize: 16, textAlign: "center" },
+  categoryContainer: { backgroundColor: colors.background, borderRadius: 12, marginBottom: spacing.sm, overflow: "hidden", elevation: 1 },
+  categoryHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md },
+  categoryName: { ...typography.body, color: colors.textPrimary, fontWeight: "600", fontSize: 16 },
+  categoryRatingRow: { flexDirection: "row", alignItems: "center" },
+  categoryRating: { color: colors.primary, fontWeight: "bold", marginRight: 6, fontSize: 15 },
+  ratingDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+  categoryDetail: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
+  categoryDetailText: { color: colors.textSecondary, fontSize: 15, lineHeight: 20 },
+
+  // Similar products styles
+  similarItem: { backgroundColor: colors.background, borderRadius: 16, width: 150, padding: spacing.sm, marginRight: spacing.md, alignItems: "center", elevation: 2 },
+  similarImage: { width: 100, height: 100, borderRadius: 12, marginBottom: spacing.sm, backgroundColor: colors.surface },
+  similarName: { color: colors.textPrimary, fontWeight: "600", fontSize: 14, textAlign: "center" },
+  similarManufacturer: { color: colors.textSecondary, fontSize: 12, marginTop: 2, textAlign: "center" },
 });
 
 export default ProductScreen;

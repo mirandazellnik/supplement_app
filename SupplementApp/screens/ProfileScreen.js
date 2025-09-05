@@ -23,6 +23,11 @@ export default function ProfileScreen({ navigation }) {
         <TouchableOpacity style={styles.button} onPress={handleLogout}>
           <Text style={styles.buttonText}>Logout</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Product", { upc:829835006489 })}>
+          <Text style={styles.buttonText}>Go to product</Text>
+
+        </TouchableOpacity>
       </View>
     </LinearGradient>
   );

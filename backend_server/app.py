@@ -71,7 +71,7 @@ def handle_connect(auth=None):
         user_id = str(decoded["sub"])
         from flask_socketio import join_room
         join_room(user_id)
-        logger.info(f"User {user_id} connected to WebSocket (new)")
+        logger.info(f"User {user_id} connected to WebSocket")
         #socketio.emit("lookup_update", {"junk":"test"}, room=user_id)
         #logger.info(f"Emitted dummy lookup_update to room {user_id}")
     except Exception as e:
