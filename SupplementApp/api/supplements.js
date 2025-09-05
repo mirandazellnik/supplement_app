@@ -30,7 +30,7 @@ export async function lookup(upc) {
 }
 
 // --- CONNECT TO SOCKET ---
-export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError) {
+export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError, onConnect) {
   console.log("Connecting to socket with token:", token);
   if (!socket) {
     socket = io(BASE_URL, {
@@ -40,6 +40,7 @@ export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarErro
 
     socket.on("connect", () => {
       console.log("✅ Connected to socket server");
+      onConnect();
     });
 
     socket.on("disconnect", () => {

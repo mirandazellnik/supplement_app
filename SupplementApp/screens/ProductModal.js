@@ -48,13 +48,17 @@ const ProductScreen = ({ upc, sheetRef }) => {
   const [categories, setCategories] = useState(CATEGORIES_PLACEHOLDER);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(true);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
   const [notFound, setNotFound] = useState(false);
   const [recFailed, setRecFailed] = useState(false);
   const [categoriesFailed, setCategoriesFailed] = useState(false);
 
+  const [upcLookup, setUpcLookup] = useState(null);
+
   useEffect(() => {
+    if (!upc) return;
     // connect socket on mount
     connectSocket(userToken,
       (data) => {
@@ -67,13 +71,15 @@ const ProductScreen = ({ upc, sheetRef }) => {
 
         setLoadingCategories(false);
       },
-      (error) => {console.error("Socket error:", error);},
+      (error) => {console.error("Socket error:", error); setLoadingCategories(false);},
       (data) => {
         if (data?.recommendations) {
           setSimilarProducts(data.recommendations);
         }
+        setLoadingRecs(false);
       },
-      (similarError) => {console.error("Similar products error:", similarError);}
+      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);},
+      () => {setUpcLookup(upc)}
     );
   
     return () => {
@@ -90,13 +96,16 @@ const ProductScreen = ({ upc, sheetRef }) => {
     setSimilarProducts([]);
     setLoadingProduct(true);
     setLoadingCategories(true);
+    setLoadingRecs(true);
     setNotFound(false);
     setCategoriesFailed(false);
     setRecFailed(false);
+    setUpcLookup(null);
   }, [upc]);
 
   // Fetch initial product info via REST
   useEffect(() => {
+    if (!upcLookup) return;
     if (!upc || scanningRef.current) return;
     scanningRef.current = true;
 
@@ -127,7 +136,7 @@ const ProductScreen = ({ upc, sheetRef }) => {
     }
 
     fetchProductDetails();
-  }, [upc]);
+  }, [upcLookup]);
 
   const toggleExpand = (id) => {
     setExpanded((prev) => {
@@ -240,10 +249,17 @@ const ProductScreen = ({ upc, sheetRef }) => {
           );
         })
       )}
+      
       {/* Similar products */}
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
-      {recFailed && <Text>Unable to load similar products at this time.</Text>}
-      {similarProducts.length > 0 && (
+      {categoriesFailed && <Text>Unable to load similar products at this time.</Text>}
+      {loadingRecs ? (
+        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Fetching recommended products...</Text>
+        </View>
+      ) :
+      (similarProducts.length > 0 && (
         <>
           <FlatList
             data={similarProducts}
@@ -268,7 +284,7 @@ const ProductScreen = ({ upc, sheetRef }) => {
             )}
           />
         </>
-      )}
+      ))}
 
     </BottomSheetScrollView>
   );

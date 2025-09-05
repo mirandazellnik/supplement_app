@@ -56,8 +56,11 @@ const ProductScreen = ({  }) => {
   const [notFound, setNotFound] = useState(false);
   const [recFailed, setRecFailed] = useState(false);
   const [categoriesFailed, setCategoriesFailed] = useState(false);
+  
+  const [upcLookup, setUpcLookup] = useState(null);
 
   useEffect(() => {
+    if (!upc) return;
     // connect socket on mount
     connectSocket(userToken,
       (data) => {
@@ -77,7 +80,8 @@ const ProductScreen = ({  }) => {
         }
         setLoadingRecs(false);
       },
-      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);}
+      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);},
+      () => {setUpcLookup(upc)}
     );
   
     return () => {
@@ -85,6 +89,7 @@ const ProductScreen = ({  }) => {
     };
     }, [upc]
   );
+
 
   // Reset state when UPC changes
   useEffect(() => {
@@ -104,6 +109,7 @@ const ProductScreen = ({  }) => {
 
   // Fetch initial product info via REST
   useEffect(() => {
+    if (!upcLookup) return;
     if (!upc || scanningRef.current) return;
     scanningRef.current = true;
 
@@ -134,7 +140,7 @@ const ProductScreen = ({  }) => {
     }
 
     fetchProductDetails();
-  }, [upc]);
+  }, [upcLookup]);
 
   const toggleExpand = (id) => {
     setExpanded((prev) => {
