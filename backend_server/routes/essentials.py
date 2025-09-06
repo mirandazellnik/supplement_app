@@ -1,0 +1,33 @@
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import requests
+
+from backend_server.services.gpt_service import analyze_supplements, recommend_supplement_by_question
+from backend_server.services.llm_client import ask_openrouter
+from backend_server.services.vector_store import vector_search
+from backend_server.utils.barcodes import format_barcode
+from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request
+from backend_server.config import Config
+from backend_server.utils import api_requests
+
+essentials_bp = Blueprint("essentials", __name__)
+
+@essentials_bp.route("/lookup", methods=["POST"])
+@jwt_required()
+def lookup():
+    data = request.get_json()
+    essential_name = data.get("name")
+    if not essential_name:
+        return jsonify({"error": "Missing essential name"}), 400
+    
+    user_id = get_jwt_identity()  # current user
+    print(f"ess name {essential_name}")
+    try:
+        response = ask_openrouter(f"""
+Give me a short, roughly 3-sentence blurb about {essential_name}, as it is used in supplements. Describe its common function in supplements (for humans), the common positive effects it has on humans, and any common potential risks that can occur from taking supplements which contain it. Your response should not contain any markdown formatting, newline characters, tab characters, or other attempts at formatting.
+""")
+    except Exception as e:
+        print("Error with essential lookup", e)
+        return jsonify({"error": str(e)}), 500
+    
+    return response

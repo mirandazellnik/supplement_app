@@ -7,6 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import QRScanner from "../screens/scanner";
 import EssentialScreen from "../screens/EssentialScreen";
 import NewScreen from "../screens/NewScreen";
+import ScannerStack from "./ScannerStack";
+import NewHomeScreen from "../screens/NewHomeScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -19,6 +21,7 @@ export default function BottomTabs() {
 
           if (route.name === "Home") iconName = "home";
           else if (route.name === "Profile") iconName = "person";
+          else if (route.name === "Scanner") iconName = "barcode-outline"
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -26,14 +29,17 @@ export default function BottomTabs() {
         tabBarInactiveTintColor: "gray",
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      {/*<Tab.Screen name="Home" component={HomeScreen} />*/}
+      <Tab.Screen name="Home" component={NewHomeScreen}/>
+      <Tab.Screen name="Scanner" component={ScannerStack}/>
       <Tab.Screen name="Profile">
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
-      <Tab.Screen name="Product" component={ProductScreen} />
-      <Tab.Screen name="Essentials" component={EssentialScreen} />
-      <Tab.Screen name="Scanner" component={QRScanner} />
-      <Tab.Screen name="New" component={NewScreen} />
+      {/*<Tab.Screen name="Product" component={ProductScreen} />*/}
+      {/*<Tab.Screen name="Essentials" component={EssentialScreen} />*/}
+      {/*<Tab.Screen name="Scanner" component={QRScanner} />*/}
+      
+      {/*<Tab.Screen name="New" component={NewScreen} />*/}
     </Tab.Navigator>
   );
 }

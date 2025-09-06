@@ -7,9 +7,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ProductScreen from "./ProductModal"; // import ProductScreen
 import { useFocusEffect, useNavigation, useIsFocused } from "@react-navigation/native";
 
-export default function QRScanner() {
+export default function QRScanner({navigation}) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  //const navigation = useNavigation();
 
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
@@ -107,7 +107,7 @@ export default function QRScanner() {
         onClose={handleCloseSheet}
         onChange={handleSheetChange}
       >
-        <ProductScreen upc={upc} sheetRef={sheetRef} />
+        <ProductScreen upc={upc} sheetRef={sheetRef} navigation={navigation}/>
       </BottomSheet>
     </GestureHandlerRootView>
   );

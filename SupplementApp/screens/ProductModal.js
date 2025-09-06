@@ -29,16 +29,16 @@ const ESSENTIALS_PLACEHOLDER = [
 ];
 
 const CATEGORIES_PLACEHOLDER = [
-  { id: "1", name: "Purity", rating: "Good", detail: "Third-party tested for purity and quality." },
-  { id: "2", name: "Potency", rating: "Okay", detail: "Label-accurate and high bio-availability." },
-  { id: "3", name: "Additives", rating: "Great", detail: "Few or no additives or fillers." },
-  { id: "4", name: "Safety", rating: "Okay", detail: "No known risks." },
-  { id: "5", name: "Evidence", rating: "Bad", detail: "Third-party tested for purity and quality." },
-  { id: "6", name: "Brand", rating: "Okay", detail: "Recalls/history of fraud." },
-  { id: "7", name: "Environmental", rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
+  { id: "1", name: "Purity", score:1, rating: "Good", detail: "Third-party tested for purity and quality." },
+  { id: "2", name: "Potency", score:1,rating: "Okay", detail: "Label-accurate and high bio-availability." },
+  { id: "3", name: "Additives", score:1,rating: "Great", detail: "Few or no additives or fillers." },
+  { id: "4", name: "Safety", score:1,rating: "Okay", detail: "No known risks." },
+  { id: "5", name: "Evidence", score:1,rating: "Bad", detail: "Third-party tested for purity and quality." },
+  { id: "6", name: "Brand", score:1, rating: "Okay", detail: "Recalls/history of fraud." },
+  { id: "7", name: "Environmental", score:1, rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
 ];
 
-const ProductScreen = ({ upc, sheetRef }) => {
+const ProductScreen = ({ upc, sheetRef, navigation }) => {
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
   const scanningRef = useRef(false);
@@ -49,6 +49,7 @@ const ProductScreen = ({ upc, sheetRef }) => {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(true);
+  const [loadingEssentials, setLoadingEssentials] = useState(true);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
   const [notFound, setNotFound] = useState(false);
@@ -79,6 +80,13 @@ const ProductScreen = ({ upc, sheetRef }) => {
         setLoadingRecs(false);
       },
       (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);},
+      (data) => {
+        if (data) {
+          setEssentials(data);
+        }
+        setLoadingEssentials(false);
+      },
+      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false);},
       () => {setUpcLookup(upc)}
     );
   
@@ -195,20 +203,27 @@ const ProductScreen = ({ upc, sheetRef }) => {
       </View>
 
       {/* Essentials */}
-        <Text style={styles.sectionTitle}>Essentials</Text>
-        <FlatList
-        data={ESSENTIALS_PLACEHOLDER}
+        {notFound ? null : <Text style={styles.sectionTitle}>Essentials</Text>}
+        {loadingEssentials ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> :
+        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Fetching more detailed information...</Text>
+        </View>
+        :
+        (<FlatList
+        data={essentials}
         horizontal
         nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem}>
+          <TouchableOpacity style={styles.essentialItem} onPress={()=>{navigation.navigate("Essential", {essentialName: item.name})}}>
             <Text style={styles.essentialText}>{item.name}</Text>
           </TouchableOpacity>
         )}
-      />
+      />)
+      }
 
       {/* Categories */}
       {notFound ? null : <Text style={styles.sectionTitle}>Categories</Text>}

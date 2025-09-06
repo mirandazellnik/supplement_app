@@ -30,7 +30,7 @@ export async function lookup(upc) {
 }
 
 // --- CONNECT TO SOCKET ---
-export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError, onConnect) {
+export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError, onEssentials, onEssentialsError, onConnect) {
   console.log("Connecting to socket with token:", token);
   if (!socket) {
     socket = io(BASE_URL, {
@@ -66,6 +66,21 @@ export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarErro
     socket.on("recommend_similar_products_error", (err) => {
       console.error("⚠️ Similar products error:", err);
       onSimilarError(err);
+    });
+
+    socket.on("essentials", (data) => {
+      console.log("📦 Received essentials:", data);
+      var x = data.essentials.map((name, index) => ({
+        id: (index + 1).toString(),
+        name: name
+      }));
+      console.log("📦 Essentials transformed:", x);
+      onEssentials(x);
+    });
+
+    socket.on("essentials_error", (err) => {
+      console.log("⚠️ Essentials error:", err);
+      onEssentialsError(err);
     });
   }
 }

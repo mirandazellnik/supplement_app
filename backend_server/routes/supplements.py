@@ -6,7 +6,7 @@ from backend_server.services.gpt_service import analyze_supplements, recommend_s
 from backend_server.services.llm_client import ask_openrouter
 from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
-from backend_server.services.tasks import fetch_label_details, recommend_similar_products
+from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request
 from backend_server.config import Config
 from backend_server.utils import api_requests
 
@@ -99,6 +99,7 @@ def lookup():
         try:
             fetch_label_details.delay(str(user_id), str(_id))
             recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
+            openfoodfacts_request.delay(str(user_id), str(barcode))
         except Exception as e:
             # if Celery is not available, still continue (optionally do synchronous fallback)
             print("Warning: failed to queue background task:", e)

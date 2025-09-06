@@ -10,7 +10,7 @@ import time
 from backend_server.services.socketio_ref import socketio
 from backend_server.services.gpt_service import fetch_similar_products
 from backend_server.utils import api_requests
-from backend_server.services.rating_calculators import nih_dsld
+from backend_server.services.rating_calculators import nih_dsld, openfoodfacts, essential_finder
 from backend_server.utils.socket_emit import emit_with_retry
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,19 @@ def fetch_label_details(user_id, product_id):
             logger.exception("Failed to emit lookup_update_error")
         return None
 
+    # Calculate and send essentials
+    try:
+        essential_info = essential_finder.classify_ingredients_with_gpt(label)
+        assert essential_info["essentials"]
+        assert essential_info["non_essentials"]
+        socketio.emit("essentials", essential_info, room=user_id)
+    except:
+        logger.exception("Failed to calculate essentials %s: %s", product_id, e)
+        try:
+            socketio.emit("essentials_error", {"product_id": product_id, "error": str(e)})
+        except:
+            logger.exception("Failed to emit essentials_error")
+    
     # compute categories / rating
     categories = nih_dsld.compute_category_scores(label)
     overall = nih_dsld.compute_overall_rating(categories)
@@ -101,5 +114,57 @@ def recommend_similar_products(user_id, product_id, product_name, brand_name):
         socketio.emit("recommend_similar_products", recommendations, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit recommend_similar_products: %s", e)
+
+    return None
+
+@celery.task
+def openfoodfacts_request(user_id, upc):
+    """
+    Attempt to fetch product info from OpenFoodFacts database.
+    """
+    try:
+        logger.info("Fetching OFF details for id=%s (emit to room=%s)", upc, user_id)
+        r = api_requests.get(f"https://world.openfoodfacts.net/api/v2/product/{upc}.json", timeout=15)
+        r.raise_for_status()
+        info = r.json()
+    except Exception as e:
+        logger.exception("Failed to fetch OFF %s: %s", upc, e)
+        try:
+            socketio.emit("off_error", {"upc": upc, "error": str(e)}, room=user_id)
+        except Exception:
+            logger.exception("Failed to emit off_error")
+        return None
+
+    if (info["status"] == 0):
+        logger.exception("OFF not found!")
+        socketio.emit("off_error", {"upc": upc, "error": "Not found"}, room=user_id)
+        return None
+    
+    # compute categories / rating
+    cat_and_conf = openfoodfacts.compute_scores(info)
+    print(cat_and_conf)
+    print(info["product"]["image_url"])
+    #overall = nih_dsld.compute_overall_rating(categories)
+
+    """
+    payload = {
+        "product_id": str(upc),
+        "rating": overall,
+        "categories": categories,
+        # optionally include a few display-friendly fields from label
+        "name": label.get("fullName") or label.get("brandName"),
+        "brand": label.get("brandName"),
+        "image": label.get("thumbnail"),
+        "raw_label": label,  # optional: include raw label if you want the frontend to show more details
+    }
+
+    # emit to the user's room
+    try:
+        #time.sleep(1)
+        logger.info("Emitting lookup_update to room=%s", user_id)
+        socketio.emit("lookup_update", payload, room=user_id)
+    except Exception as e:
+        logger.exception("Failed to emit lookup_update: %s", e)
+    """
 
     return None

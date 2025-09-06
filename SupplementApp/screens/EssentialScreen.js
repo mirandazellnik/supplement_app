@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, FlatList } from "react-native";
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
 import StarRating from "../components/StarRating";
+
+import { get_essential } from "../api/essentials";
+import { ActivityIndicator } from "react-native";
 
 // Example data for the essential and its products
 const essential = {
@@ -60,7 +63,27 @@ const products = [
 
 const PRODUCT_IMAGE_SIZE = 60;
 
-const EssentialScreen = ({ navigation }) => {
+const EssentialScreen = ({ navigation, essentialName }) => {
+  //const [essentialName, setEssentialName] = useState("Vitamin C");
+  const [essentialDesc, setEssentialDesc] = useState("");
+  const [loadingDesc, setLoadingDesc] = useState(true);
+
+  useEffect(() => {
+    async function fetchEssential() {
+      const desc = await get_essential(essentialName);
+      setEssentialDesc(desc);
+      setLoadingDesc(false);
+    }
+    fetchEssential();
+  }, 
+  [essentialName])
+
+  useEffect(() => {
+    setEssentialDesc("");
+    setLoadingDesc(true);
+
+  }, [essentialName])
+
   const renderProduct = ({ item }) => (
     <View style={styles.productBox}>
       <Image source={item.image} style={styles.productImage} />
@@ -83,9 +106,15 @@ const EssentialScreen = ({ navigation }) => {
       ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
       ListHeaderComponent={
         <>
-          <Text style={styles.essentialName}>{essential.name}</Text>
-          <Text style={styles.essentialDescription}>{essential.description}</Text>
-          <Text style={styles.sectionTitle}>Products with {essential.name}</Text>
+          <Text style={styles.essentialName}>{essentialName}</Text>
+          {loadingDesc ? (
+                  <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text>Loading...</Text>
+                  </View>
+                ) : (
+          <Text style={styles.essentialDescription}>{essentialDesc}</Text>)}
+          <Text style={styles.sectionTitle}>Products with {essentialName}</Text>
         </>
       }
     />
