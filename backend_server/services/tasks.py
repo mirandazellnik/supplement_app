@@ -44,8 +44,12 @@ def fetch_label_details(user_id, product_id):
     # Calculate and send essentials
     try:
         essential_info = essential_finder.classify_ingredients_with_gpt(label)
-        assert essential_info["essentials"]
-        assert essential_info["non_essentials"]
+        assert essential_info["essentials"] or essential_info["non_essentials"]
+        if essential_info["essentials"] == None:
+            essential_info["essentials"] = []
+        if essential_info["non_essentials"] == None:
+            essential_info["non_essentials"] = []
+        
         socketio.emit("essentials", essential_info, room=user_id)
     except Exception as e:
         logger.exception("Failed to calculate essentials %s: %s", product_id, e)
