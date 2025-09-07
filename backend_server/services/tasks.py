@@ -47,7 +47,7 @@ def fetch_label_details(user_id, product_id):
         assert essential_info["essentials"]
         assert essential_info["non_essentials"]
         socketio.emit("essentials", essential_info, room=user_id)
-    except:
+    except Exception as e:
         logger.exception("Failed to calculate essentials %s: %s", product_id, e)
         try:
             socketio.emit("essentials_error", {"product_id": product_id, "error": str(e)})

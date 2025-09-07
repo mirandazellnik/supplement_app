@@ -10,7 +10,7 @@ const Stack = createNativeStackNavigator();
 export default function ScannerStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Scanner" component={QRScanner} />
+      <Stack.Screen name="Barcode Scanner" component={QRScanner} />
       <Stack.Screen name="Product" component={ProductScreen} />
       <Stack.Screen name="Essential">
         {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName} navigation={props.route.params?.navigation}/>}
