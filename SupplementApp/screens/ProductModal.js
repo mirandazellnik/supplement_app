@@ -46,15 +46,19 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState(CATEGORIES_PLACEHOLDER);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+
   const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(true);
   const [loadingEssentials, setLoadingEssentials] = useState(true);
+
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+  
   const [notFound, setNotFound] = useState(false);
   const [recFailed, setRecFailed] = useState(false);
   const [categoriesFailed, setCategoriesFailed] = useState(false);
+  const [essentialsFailed, setEssentialsFailed] = useState(false);
 
   const [upcLookup, setUpcLookup] = useState(null);
 
@@ -72,21 +76,21 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
         setLoadingCategories(false);
       },
-      (error) => {console.error("Socket error:", error); setLoadingCategories(false);},
+      (error) => {console.error("Socket error:", error); setLoadingCategories(false); setCategoriesFailed(true);},
       (data) => {
         if (data?.recommendations) {
           setSimilarProducts(data.recommendations);
         }
         setLoadingRecs(false);
       },
-      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);},
+      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false); setRecFailed(true);},
       (data) => {
         if (data) {
           setEssentials(data);
         }
         setLoadingEssentials(false);
       },
-      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false);},
+      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false); setEssentialsFailed(true);},
       () => {setUpcLookup(upc)}
     );
   
@@ -102,12 +106,17 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
     setProduct(null);
     setCategories([]);
     setSimilarProducts([]);
+
     setLoadingProduct(true);
     setLoadingCategories(true);
     setLoadingRecs(true);
+    setLoadingEssentials(true);
+
     setNotFound(false);
     setCategoriesFailed(false);
+    setEssentialsFailed(false);
     setRecFailed(false);
+
     setUpcLookup(null);
   }, [upc]);
 
@@ -204,7 +213,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
       {/* Essentials */}
         {notFound ? null : <Text style={styles.sectionTitle}>Essentials</Text>}
-        {loadingEssentials ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> :
+        {loadingEssentials ? notFound ? null : essentialsFailed ? <Text>Unable to fetch detailed information.</Text> :
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text>Fetching more detailed information...</Text>
@@ -227,47 +236,51 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
       {/* Categories */}
       {notFound ? null : <Text style={styles.sectionTitle}>Categories</Text>}
-      {loadingCategories ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> : (
-        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
-          <ActivityIndicator size="small" color={colors.primary} />
-          <Text>Fetching more detailed information...</Text>
-        </View>
-      ) : (
-        categories.map((cat, idx) => {
-          if (!anims[idx]) anims[idx] = new Animated.Value(0);
-          return (
-            <View key={idx} style={styles.categoryContainer}>
-              <TouchableOpacity
-                style={styles.categoryHeader}
-                onPress={() => toggleExpand(idx)}
-              >
-                <Text style={styles.categoryName}>{cat.name}</Text>
-                <View style={styles.categoryRatingRow}>
-                  <Text style={styles.categoryRating}>{cat.rating}</Text>
-                  <View
-                    style={[styles.ratingDot, { backgroundColor: getDotColor(cat.rating) }]}
-                  />
-                </View>
-              </TouchableOpacity>
-              <Animated.View
-                style={{
-                  overflow: "hidden",
-                  height: anims[idx].interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
-                  opacity: anims[idx],
-                }}
-              >
-                <View style={styles.categoryDetail}>
-                  <Text style={styles.categoryDetailText}>{cat.detail || ""}</Text>
-                </View>
-              </Animated.View>
-            </View>
-          );
+      {loadingCategories ?
+        notFound ?
+          null : categoriesFailed ?
+            <Text>Unable to fetch detailed information.</Text> :
+            (
+              <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text>Fetching more detailed information...</Text>
+              </View>
+            ) : (
+              categories.map((cat, idx) => {
+                if (!anims[idx]) anims[idx] = new Animated.Value(0);
+                return (
+                  <View key={idx} style={styles.categoryContainer}>
+                    <TouchableOpacity
+                      style={styles.categoryHeader}
+                      onPress={() => toggleExpand(idx)}
+                    >
+                      <Text style={styles.categoryName}>{cat.name}</Text>
+                      <View style={styles.categoryRatingRow}>
+                        <Text style={styles.categoryRating}>{cat.rating}</Text>
+                        <View
+                          style={[styles.ratingDot, { backgroundColor: getDotColor(cat.rating) }]}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <Animated.View
+                      style={{
+                        overflow: "hidden",
+                        height: anims[idx].interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
+                        opacity: anims[idx],
+                      }}
+                    >
+                      <View style={styles.categoryDetail}>
+                        <Text style={styles.categoryDetailText}>{cat.detail || ""}</Text>
+                      </View>
+                    </Animated.View>
+                  </View>
+                );
         })
       )}
       
       {/* Similar products */}
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
-      {categoriesFailed && <Text>Unable to load similar products at this time.</Text>}
+      {recFailed && <Text>Unable to load similar products at this time.</Text>}
       {loadingRecs ? (
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
