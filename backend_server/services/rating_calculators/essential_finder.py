@@ -12,8 +12,19 @@ def extract_ingredients(dsld_json):
             if "nestedRows" in row and row["nestedRows"]:
                 recurse(row["nestedRows"])
 
-    recurse(dsld_json.get("ingredientRows", []))
-    return essentials, [x["name"] for x in dsld_json.get("otheringredients", {}).get("ingredients", [])]
+    ing_rows = dsld_json.get("ingredientRows", [])
+    if ing_rows == None:
+        ing_rows = []
+    recurse(ing_rows)
+
+    other = dsld_json.get("otheringredients", {})
+    if other == None:
+        other = {}
+    other = other.get("ingredients", [])
+    if other == None:
+        other = []
+
+    return essentials, [x["name"] for x in other]
 
 def classify_ingredients_with_gpt(dsld_json):
     essentials, non_essentials = extract_ingredients(dsld_json)
