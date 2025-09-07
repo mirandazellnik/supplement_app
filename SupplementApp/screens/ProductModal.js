@@ -38,6 +38,7 @@ const CATEGORIES_PLACEHOLDER = [
   { id: "7", name: "Environmental", score:1, rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
 ];
 
+
 const ProductScreen = ({ upc, sheetRef, navigation }) => {
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
