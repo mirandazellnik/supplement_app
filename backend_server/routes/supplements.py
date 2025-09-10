@@ -118,7 +118,7 @@ def dsld_get(path, params=None):
     r.raise_for_status()
     return r.json()
 
-@supplements_bp.route("/search")
+@supplements_bp.route("/search", methods=["POST"])
 def search():
     data = request.get_json()
     q = data.get("q")
