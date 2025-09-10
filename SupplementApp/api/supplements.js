@@ -29,6 +29,26 @@ export async function lookup(upc) {
   }
 }
 
+export async function search(query) {
+  const token = await getToken();
+  try {
+    const res = await axios.post(
+      `${API_URL}/search`,
+      { q: query },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Immediate partial response (fast)
+    return res.data.hits; 
+  } catch (e) {
+    throw e.response?.data?.msg || "Lookup failed";
+  }
+}
+
 // --- CONNECT TO SOCKET ---
 export function connectSocket(token, onUpdate, onError, onSimilar, onSimilarError, onEssentials, onEssentialsError, onConnect) {
   console.log("Connecting to socket with token:", token);

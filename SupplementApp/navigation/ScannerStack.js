@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator();
 
 export default function ScannerStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: true }}>
       <Stack.Screen name="Barcode Scanner" component={QRScanner} />
       <Stack.Screen name="Product" component={ProductScreen} />
       <Stack.Screen name="Essential">
