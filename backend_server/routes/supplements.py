@@ -112,3 +112,18 @@ def lookup():
     except ValueError as ve:
         print("JSON decode error:", ve)
         return jsonify({"error": "Invalid response from NIH API"}), 500
+
+def dsld_get(path, params=None):
+    r = api_requests.get(f"{NIH_API_URL}{path}", params=params, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+@supplements_bp.route("/search")
+def search():
+    data = request.get_json()
+    q = data.get("q")
+    if not q:
+        return jsonify({"error": "Missing query for /search"}), 400
+    method = request.args.get("method", "by_keyword")  # default
+    results = dsld_get("/browse-products/", {"method": method, "q": q})
+    return jsonify(results)
