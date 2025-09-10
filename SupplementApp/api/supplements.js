@@ -113,3 +113,24 @@ export function disconnectSocket() {
     socket = null;
   }
 }
+
+// --- LOOKUP FUNCTION ---
+export async function lookupbyid(id) {
+  const token = await getToken();
+  try {
+    const res = await axios.post(
+      `${API_URL}/lookupbyid`,
+      { dsld_id: id },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Immediate partial response (fast)
+    return true; 
+  } catch (e) {
+    throw e.response?.data?.msg || "Lookup failed";
+  }
+}

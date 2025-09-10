@@ -142,3 +142,34 @@ def search():
     
     results["hits"] = results_new
     return jsonify(results)
+
+@supplements_bp.route("/lookupbyid", methods=["POST"])
+@jwt_required()
+def lookupbyid():
+    data = request.get_json()
+    dsld_id = data.get("dsld_id")
+    
+    if not dsld_id:
+        return jsonify({"error": "Missing product ID"}), 400
+
+    #barcode = format_barcode(barcode)
+    user_id = get_jwt_identity()  # current user
+
+    try:
+        # Trigger background task to fetch /label details
+        try:
+            fetch_label_details.delay(str(user_id), str(dsld_id), recommend_after=True)
+            #recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
+            #openfoodfacts_request.delay(str(user_id), str(barcode))
+        except Exception as e:
+            # if Celery is not available, still continue (optionally do synchronous fallback)
+            print("Warning: failed to queue background task:", e)
+
+        return {}, 200
+
+    except requests.RequestException as e:
+        print("Error querying NIH API:", e)
+        return jsonify({"error": str(e)}), 500
+    except ValueError as ve:
+        print("JSON decode error:", ve)
+        return jsonify({"error": "Invalid response from NIH API"}), 500

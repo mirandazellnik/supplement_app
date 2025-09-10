@@ -14,7 +14,7 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookup, disconnectSocket, connectSocket } from "../api/supplements";
+import { lookupbyid, disconnectSocket, connectSocket } from "../api/supplements";
 import {
   FlatList,
   ScrollView
@@ -30,37 +30,43 @@ const ESSENTIALS_PLACEHOLDER = [
 ];
 
 const CATEGORIES_PLACEHOLDER = [
-  { id: "1", name: "Purity", rating: "Good", detail: "Third-party tested for purity and quality." },
-  { id: "2", name: "Potency", rating: "Okay", detail: "Label-accurate and high bio-availability." },
-  { id: "3", name: "Additives", rating: "Great", detail: "Few or no additives or fillers." },
-  { id: "4", name: "Safety", rating: "Okay", detail: "No known risks." },
-  { id: "5", name: "Evidence", rating: "Bad", detail: "Third-party tested for purity and quality." },
-  { id: "6", name: "Brand", rating: "Okay", detail: "Recalls/history of fraud." },
-  { id: "7", name: "Environmental", rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
+  { id: "1", name: "Purity", score:1, rating: "Good", detail: "Third-party tested for purity and quality." },
+  { id: "2", name: "Potency", score:1,rating: "Okay", detail: "Label-accurate and high bio-availability." },
+  { id: "3", name: "Additives", score:1,rating: "Great", detail: "Few or no additives or fillers." },
+  { id: "4", name: "Safety", score:1,rating: "Okay", detail: "No known risks." },
+  { id: "5", name: "Evidence", score:1,rating: "Bad", detail: "Third-party tested for purity and quality." },
+  { id: "6", name: "Brand", score:1, rating: "Okay", detail: "Recalls/history of fraud." },
+  { id: "7", name: "Environmental", score:1, rating: "Bad", detail: "Manufacturer has strong commitment to ethical." },
 ];
 
-const ProductScreen = ({  }) => {
+
+const ProductScreen = ({ id, navigation, name, brand }) => {
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
   const scanningRef = useRef(false);
   const { userToken } = React.useContext(AuthContext);
-  const [upc, setUpc] = useState("829835006489")
 
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState(CATEGORIES_PLACEHOLDER);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingProduct, setLoadingProduct] = useState(true);
-  const [loadingRecs, setLoadingRecs] = useState(true);
-  const [similarProducts, setSimilarProducts] = useState([]);
   const [essentials, setEssentials] = useState(ESSENTIALS_PLACEHOLDER);
+
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(true);
+  const [loadingEssentials, setLoadingEssentials] = useState(true);
+
+  const [similarProducts, setSimilarProducts] = useState([]);
+  
   const [notFound, setNotFound] = useState(false);
   const [recFailed, setRecFailed] = useState(false);
   const [categoriesFailed, setCategoriesFailed] = useState(false);
-  
+  const [essentialsFailed, setEssentialsFailed] = useState(false);
+
   const [upcLookup, setUpcLookup] = useState(null);
 
   useEffect(() => {
-    if (!upc) return;
+    console.log("OPENED PRODUCT SCREEN, ID:", id)
+    if (!id) return;
     // connect socket on mount
     connectSocket(userToken,
       (data) => {
@@ -73,27 +79,33 @@ const ProductScreen = ({  }) => {
 
         setLoadingCategories(false);
       },
-      (error) => {console.error("Socket error:", error); setLoadingCategories(false);},
+      (error) => {console.error("Socket error:", error); setLoadingCategories(false); setCategoriesFailed(true);},
       (data) => {
         if (data?.recommendations) {
           setSimilarProducts(data.recommendations);
         }
         setLoadingRecs(false);
       },
-      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false);},
-      () => {setUpcLookup(upc)}
+      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false); setRecFailed(true);},
+      (data) => {
+        if (data) {
+          setEssentials(data);
+        }
+        setLoadingEssentials(false);
+      },
+      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false); setEssentialsFailed(true);},
+      () => {setUpcLookup(id)}
     );
   
     return () => {
       disconnectSocket();
     };
-    }, [upc]
+    }, [id]
   );
-
 
   // Reset state when UPC changes
   useEffect(() => {
-    if (!upc) return;
+    if (!id) return;
     setProduct(null);
     setCategories([]);
     setSimilarProducts([]);
@@ -101,29 +113,38 @@ const ProductScreen = ({  }) => {
     setLoadingProduct(true);
     setLoadingCategories(true);
     setLoadingRecs(true);
+    setLoadingEssentials(true);
 
     setNotFound(false);
     setCategoriesFailed(false);
+    setEssentialsFailed(false);
     setRecFailed(false);
-  }, [upc]);
+
+    setUpcLookup(null);
+  }, [id]);
 
   // Fetch initial product info via REST
   useEffect(() => {
     if (!upcLookup) return;
-    if (!upc || scanningRef.current) return;
+    if (!id || scanningRef.current) return;
     scanningRef.current = true;
 
     async function fetchProductDetails() {
       try {
-        console.log("Fetching product details for UPC:", upc);
-        const result = await lookup(upc);
+        console.log("Fetching product details for ID:", id);
+        const result = await lookupbyid(id);
 
-        setProduct({
+        /*setProduct({
           name: result?.name || "Unknown Product",
+          brand: result?.brand || "Unknown Brand",
           image: result?.image || require("../assets/images/vitamin-c.png"),
           rating: result?.rating || 0,
+        });*/
+        setProduct({
+          name: "Unknown Product",
+          image: require("../assets/images/vitamin-c.png"),
+          rating: 0,
         });
-
         console.log("Initial product data:", result);
       } catch (e) {
         console.warn("Failed to fetch product:", e);
@@ -184,7 +205,8 @@ const ProductScreen = ({  }) => {
       <View style={styles.topRow}>
         <Image source={product.image} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productName} numberOfLines={2} adjustsFontSizeToFit>{name}</Text>
+          <Text style={styles.brandName} numberOfLines={1} adjustsFontSizeToFit>{brand}</Text>
           <View style={styles.starsAndButtonRow}>
             <View style={styles.ratingRow}>
               <StarRating rating={product.rating} size={20} gap={2} />
@@ -199,63 +221,75 @@ const ProductScreen = ({  }) => {
       </View>
 
       {/* Essentials */}
-        <Text style={styles.sectionTitle}>Essentials</Text>
-        <FlatList
-        data={ESSENTIALS_PLACEHOLDER}
+        {notFound ? null : <Text style={styles.sectionTitle}>Essential Ingredients</Text>}
+        {loadingEssentials ? notFound ? null : essentialsFailed ? <Text>Unable to fetch detailed information.</Text> :
+        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Fetching more detailed information...</Text>
+        </View>
+        :
+        (<FlatList
+        data={essentials}
         horizontal
         nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem}>
+          <TouchableOpacity style={styles.essentialItem} onPress={()=>{navigation.navigate("Essential", {essentialName: item.name})}}>
             <Text style={styles.essentialText}>{item.name}</Text>
           </TouchableOpacity>
         )}
-      />
+      />)
+      }
 
       {/* Categories */}
       {notFound ? null : <Text style={styles.sectionTitle}>Categories</Text>}
-      {loadingCategories ? notFound ? null : categoriesFailed ? <Text>Unable to fetch detailed information.</Text> : (
-        <View style={{ alignItems: "center", marginVertical: spacing.md }}>
-          <ActivityIndicator size="small" color={colors.primary} />
-          <Text>Fetching more detailed information...</Text>
-        </View>
-      ) : (
-        categories.map((cat, idx) => {
-          if (!anims[idx]) anims[idx] = new Animated.Value(0);
-          return (
-            <View key={idx} style={styles.categoryContainer}>
-              <TouchableOpacity
-                style={styles.categoryHeader}
-                onPress={() => toggleExpand(idx)}
-              >
-                <Text style={styles.categoryName}>{cat.name}</Text>
-                <View style={styles.categoryRatingRow}>
-                  <Text style={styles.categoryRating}>{cat.rating}</Text>
-                  <View
-                    style={[styles.ratingDot, { backgroundColor: getDotColor(cat.rating) }]}
-                  />
-                </View>
-              </TouchableOpacity>
-              <Animated.View
-                style={{
-                  overflow: "hidden",
-                  height: anims[idx].interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
-                  opacity: anims[idx],
-                }}
-              >
-                <View style={styles.categoryDetail}>
-                  <Text style={styles.categoryDetailText}>{cat.detail || ""}</Text>
-                </View>
-              </Animated.View>
-            </View>
-          );
+      {loadingCategories ?
+        notFound ?
+          null : categoriesFailed ?
+            <Text>Unable to fetch detailed information.</Text> :
+            (
+              <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text>Fetching more detailed information...</Text>
+              </View>
+            ) : (
+              categories.map((cat, idx) => {
+                if (!anims[idx]) anims[idx] = new Animated.Value(0);
+                return (
+                  <View key={idx} style={styles.categoryContainer}>
+                    <TouchableOpacity
+                      style={styles.categoryHeader}
+                      onPress={() => toggleExpand(idx)}
+                    >
+                      <Text style={styles.categoryName}>{cat.name}</Text>
+                      <View style={styles.categoryRatingRow}>
+                        <Text style={styles.categoryRating}>{cat.rating}</Text>
+                        <View
+                          style={[styles.ratingDot, { backgroundColor: getDotColor(cat.rating) }]}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <Animated.View
+                      style={{
+                        overflow: "hidden",
+                        height: anims[idx].interpolate({ inputRange: [0, 1], outputRange: [0, 60] }),
+                        opacity: anims[idx],
+                      }}
+                    >
+                      <View style={styles.categoryDetail}>
+                        <Text style={styles.categoryDetailText}>{cat.detail || ""}</Text>
+                      </View>
+                    </Animated.View>
+                  </View>
+                );
         })
       )}
+      
       {/* Similar products */}
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
-      {categoriesFailed && <Text>Unable to load similar products at this time.</Text>}
+      {recFailed && <Text>Unable to load similar products at this time.</Text>}
       {loadingRecs ? (
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
@@ -314,12 +348,18 @@ const styles = StyleSheet.create({
   ratingDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
   categoryDetail: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   categoryDetailText: { color: colors.textSecondary, fontSize: 15, lineHeight: 20 },
+  brandName: {
+    fontSize: 18, // smaller than product
+    fontWeight: "500",
+    color: "#555",
+  },
 
   // Similar products styles
   similarItem: { backgroundColor: colors.background, borderRadius: 16, width: 150, padding: spacing.sm, marginRight: spacing.md, alignItems: "center", elevation: 2 },
   similarImage: { width: 100, height: 100, borderRadius: 12, marginBottom: spacing.sm, backgroundColor: colors.surface },
   similarName: { color: colors.textPrimary, fontWeight: "600", fontSize: 14, textAlign: "center" },
   similarManufacturer: { color: colors.textSecondary, fontSize: 12, marginTop: 2, textAlign: "center" },
+  
 });
 
 export default ProductScreen;

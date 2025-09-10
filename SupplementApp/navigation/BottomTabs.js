@@ -10,6 +10,7 @@ import NewScreen from "../screens/NewScreen";
 import ScannerStack from "./ScannerStack";
 import NewHomeScreen from "../screens/NewHomeScreen";
 import SearchScreen from "../screens/SearchScreen";
+import SearchProductsStack from "../navigation/SearchProductsStack"
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +24,7 @@ export default function BottomTabs() {
           if (route.name === "Home") iconName = "home";
           else if (route.name === "Profile") iconName = "person";
           else if (route.name === "Scanner") iconName = "barcode-outline"
+          else if (route.name === "Search") iconName = "search-outline"
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -37,7 +39,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Profile" options={{ headerShown: true }}>
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
-      <Tab.Screen name="Search" options={{headerShown: true}} component={SearchScreen}/>
+      <Tab.Screen name="Search" options={{headerShown: false}} component={SearchProductsStack}/>
       {/*<Tab.Screen name="Product" component={ProductScreen} />*/}
       {/*<Tab.Screen name="Essentials" component={EssentialScreen} />*/}
       {/*<Tab.Screen name="Scanner" component={QRScanner} />*/}

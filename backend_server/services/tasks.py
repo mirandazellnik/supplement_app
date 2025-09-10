@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # celery task ---------------------------------------------------------------
 @celery.task
-def fetch_label_details(user_id, product_id):
+def fetch_label_details(user_id, product_id, recommend_after=False):
     """
     Fetch the /label/{id} data and compute detailed ratings.
     Emitted event: 'lookup_update' with payload:
@@ -80,6 +80,10 @@ def fetch_label_details(user_id, product_id):
         socketio.emit("lookup_update", payload, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit lookup_update: %s", e)
+        return None
+    
+    if recommend_after:
+        recommend_similar_products.delay(str(user_id), str(product_id), payload["name"], payload["brand"])
 
     return None
 

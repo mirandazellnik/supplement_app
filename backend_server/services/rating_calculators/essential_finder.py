@@ -51,6 +51,7 @@ TASK:
     - "Indian Frankincense gum extract" → "Boswellia"
     - "Curcuma longa root extract" → "Turmeric"
 - Keep non-essentials as-is.
+- Do NOT put phrases like "Proprietary Blend" in the "essentials" category. Any item in "essentials" should have a generic name like "Vitamin C" or "Green Tea", such that users might easily search for other items with the same essential.
 
 OUTPUT RULES:
 - Respond ONLY with valid JSON.

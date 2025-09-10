@@ -134,6 +134,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
         setProduct({
           name: result?.name || "Unknown Product",
+          brand: result?.brand || "Unknown Brand",
           image: result?.image || require("../assets/images/vitamin-c.png"),
           rating: result?.rating || 0,
         });
@@ -198,7 +199,8 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
       <View style={styles.topRow}>
         <Image source={product.image} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productName} numberOfLines={2} adjustsFontSizeToFit>{product.name}</Text>
+          <Text style={styles.brandName} numberOfLines={1} adjustsFontSizeToFit>{product.brand}</Text>
           <View style={styles.starsAndButtonRow}>
             <View style={styles.ratingRow}>
               <StarRating rating={product.rating} size={20} gap={2} />
@@ -213,7 +215,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
       </View>
 
       {/* Essentials */}
-        {notFound ? null : <Text style={styles.sectionTitle}>Essentials</Text>}
+        {notFound ? null : <Text style={styles.sectionTitle}>Essential Ingredients</Text>}
         {loadingEssentials ? notFound ? null : essentialsFailed ? <Text>Unable to fetch detailed information.</Text> :
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
@@ -340,12 +342,18 @@ const styles = StyleSheet.create({
   ratingDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
   categoryDetail: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   categoryDetailText: { color: colors.textSecondary, fontSize: 15, lineHeight: 20 },
+  brandName: {
+    fontSize: 18, // smaller than product
+    fontWeight: "500",
+    color: "#555",
+  },
 
   // Similar products styles
   similarItem: { backgroundColor: colors.background, borderRadius: 16, width: 150, padding: spacing.sm, marginRight: spacing.md, alignItems: "center", elevation: 2 },
   similarImage: { width: 100, height: 100, borderRadius: 12, marginBottom: spacing.sm, backgroundColor: colors.surface },
   similarName: { color: colors.textPrimary, fontWeight: "600", fontSize: 14, textAlign: "center" },
   similarManufacturer: { color: colors.textSecondary, fontSize: 12, marginTop: 2, textAlign: "center" },
+  
 });
 
 export default ProductScreen;

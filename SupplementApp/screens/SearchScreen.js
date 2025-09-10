@@ -12,7 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { search } from "../api/supplements"
 import { useAlert } from "../contexts/AlertContext";
 
-export default function SearchScreen() {
+export default function SearchScreen( {navigation} ) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,6 @@ export default function SearchScreen() {
 
   return (
     <LinearGradient colors={["#f9fafc", "#e6ebf2"]} style={styles.container}>
-      <Text style={styles.title}>Search Supplements</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter product name, brand, or ingredient"
@@ -70,10 +69,10 @@ export default function SearchScreen() {
           (item.dsldId ? String(item.dsldId) : index.toString())
         }
         renderItem={({ item }) => (
-          <View style={styles.resultCard}>
+          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.navigate("Product", {navigation, id: item._id, name: item._source.fullName, brand: item._source.brandName})}}>
             <Text style={styles.resultName}>{item._source.fullName}</Text>
             <Text style={styles.resultBrand}>{item._source.brandName}</Text>
-          </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={
           !loading ? (
