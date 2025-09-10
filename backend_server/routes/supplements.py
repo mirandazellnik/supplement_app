@@ -126,4 +126,19 @@ def search():
         return jsonify({"error": "Missing query for /search"}), 400
     method = request.args.get("method", "by_keyword")  # default
     results = dsld_get("/browse-products/", {"method": method, "q": q})
+    results_new = []
+
+    products_already_listed = []
+
+    for hit in results["hits"]:
+        try:
+            if hit["_source"]["fullName"] + hit["_source"]["brandName"] in products_already_listed:
+                continue
+            else:
+                products_already_listed.append(hit["_source"]["fullName"] + hit["_source"]["brandName"])
+                results_new.append(hit)
+        except:
+            pass
+    
+    results["hits"] = results_new
     return jsonify(results)
