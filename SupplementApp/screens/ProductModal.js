@@ -300,7 +300,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
       {/* Similar products */}
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
       {recFailed && <Text>Unable to load similar products at this time.</Text>}
-      {loadingRecs ? (
+      {notFound ? null : loadingRecs ? (
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text>Fetching recommended products...</Text>

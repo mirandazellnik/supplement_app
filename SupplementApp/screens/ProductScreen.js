@@ -70,12 +70,18 @@ const ProductScreen = ({ route, navigation }) => {
     React.useCallback(() => {
       // Hide the bottom tab bar
       navigation.getParent()?.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+
+      // IMPORTANT: Reset id when navigating away if fromHome is true, essentially unmounting this screen
+      return () => {if (fromHome) {navigation.setParams({id: null})}};
     }, [navigation])
   );
 
   useEffect(() => {
     console.log("OPENED PRODUCT SCREEN, ID:", id)
-    if (!id) return;
+    if (!id) {
+      setUpcLookup(null);
+      return;
+    }
     // connect socket on mount
     joinProductRoom(id, {
           onUpdate: (data) => {
@@ -318,7 +324,7 @@ const ProductScreen = ({ route, navigation }) => {
         <View>
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
       {recFailed && <Text>Unable to load similar products at this time.</Text>}
-      {loadingRecs ? (
+      {notFound ? null : loadingRecs ? (
         <View style={{ alignItems: "center", marginVertical: spacing.md }}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text>Fetching recommended products...</Text>
