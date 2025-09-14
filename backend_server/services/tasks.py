@@ -36,12 +36,13 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     except Exception as e:
         logger.exception("Failed to fetch label %s: %s", product_id, e)
         try:
-            socketio.emit("lookup_update_error", {"product_id": product_id, "error": str(e)}, room=user_id)
+            socketio.emit("lookup_update_error", {"room": user_id, "data": {"product_id": product_id, "error": str(e)}}, room=user_id)
         except Exception:
             logger.exception("Failed to emit lookup_update_error")
         return None
 
     # Calculate and send essentials
+    essential_info = {}
     try:
         essential_info = essential_finder.classify_ingredients_with_gpt(label)
         assert essential_info["essentials"] or essential_info["non_essentials"]
@@ -49,12 +50,12 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
             essential_info["essentials"] = []
         if essential_info["non_essentials"] == None:
             essential_info["non_essentials"] = []
-        
-        socketio.emit("essentials", essential_info, room=user_id)
+
+        socketio.emit("essentials", {"room": user_id, "data": essential_info}, room=user_id)
     except Exception as e:
         logger.exception("Failed to calculate essentials %s: %s", product_id, e)
         try:
-            socketio.emit("essentials_error", {"product_id": product_id, "error": str(e)})
+            socketio.emit("essentials_error", {"room": user_id, "data": {"product_id": product_id, "error": str(e)}}, room=user_id)
         except:
             logger.exception("Failed to emit essentials_error")
     
@@ -77,13 +78,62 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     try:
         #time.sleep(1)
         logger.info("Emitting lookup_update to room=%s", user_id)
-        socketio.emit("lookup_update", payload, room=user_id)
+        socketio.emit("lookup_update", {"room": user_id, "data": payload}, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit lookup_update: %s", e)
         return None
     
     if recommend_after:
-        recommend_similar_products.delay(str(user_id), str(product_id), payload["name"], payload["brand"])
+        #recommend_similar_products.delay(str(user_id), str(product_id), payload["name"], payload["brand"])
+        recommend_similar_by_essentials.delay(str(user_id), essential_info["essentials"])
+    return None
+
+@celery.task
+def recommend_similar_by_essentials(user_id, essentials):
+    """
+    Recommend similar products based on the given essentials list.
+    Emitted event: 'recommend_similar_products' with payload:
+      {
+        user_id: "...",
+        recommendations: [{id, name, image, ...}, ...]
+      }
+    """
+
+    try:
+        logger.info("Recommending similar products by essentials (emit to room=%s)", user_id)
+        # Fetch similar products from your recommendation engine
+        r = api_requests.get(f"https://api.ods.od.nih.gov/dsld/v9/search-filter/?q={' '.join(essentials)}", timeout=15)
+        r.raise_for_status()
+        resp = r.json()
+        if resp.get("hits") == None:
+            raise ValueError("No hits in response")
+        
+        recommendations = []
+        for product in resp.get("hits", [])[:10]:  # limit to top 10
+            p = product.get("_source", {})
+            recommendations.append({
+                "id": str(product.get("_id")),
+                "name": p.get("fullName"),
+                "brand": p.get("brandName"),
+                "image": p.get("thumbnail"),
+                "netContents": p.get("netContents"),
+            })
+        recommendations = {"recommendations": recommendations}
+
+    except Exception as e:
+        logger.exception("Failed to recommend similar products by essentials: %s", e)
+        try:
+            socketio.emit("recommend_similar_products_error", {"room": user_id, "data": {"error": str(e)}}, room=user_id)
+        except Exception:
+            logger.exception("Failed to emit recommend_similar_products_error")
+        return None
+
+    # Emit recommendations to the user's room
+    try:
+        logger.info("Emitting recommend_similar_products to room=%s", user_id)
+        socketio.emit("recommend_similar_products", {"room": user_id, "data": recommendations}, room=user_id)
+    except Exception as e:
+        logger.exception("Failed to emit recommend_similar_products: %s", e)
 
     return None
 
@@ -106,12 +156,12 @@ def recommend_similar_products(user_id, product_id, product_name, brand_name):
             recommendations = json.loads(recommendations)
         except json.JSONDecodeError as e:
             logger.exception("Failed to parse recommendations JSON: %s", e)
-            socketio.emit("recommend_similar_products_error", {"product_id": product_id, "error": "Invalid recommendations format"}, room=user_id)
+            socketio.emit("recommend_similar_products_error", {"room": user_id, "data": {"product_id": product_id, "error": "Invalid recommendations format"}}, room=user_id)
             return None
     except Exception as e:
         logger.exception("Failed to recommend similar products for %s: %s", product_id, e)
         try:
-            socketio.emit("recommend_similar_products_error", {"product_id": product_id, "error": str(e)}, room=user_id)
+            socketio.emit("recommend_similar_products_error", {"room": user_id, "data": {"product_id": product_id, "error": str(e)}}, room=user_id)
         except Exception:
             logger.exception("Failed to emit recommend_similar_products_error")
         return None
@@ -119,7 +169,7 @@ def recommend_similar_products(user_id, product_id, product_name, brand_name):
     # Emit recommendations to the user's room
     try:
         logger.info("Emitting recommend_similar_products to room=%s", user_id)
-        socketio.emit("recommend_similar_products", recommendations, room=user_id)
+        socketio.emit("recommend_similar_products", {"room": user_id, "data": recommendations}, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit recommend_similar_products: %s", e)
 
@@ -138,14 +188,14 @@ def openfoodfacts_request(user_id, upc):
     except Exception as e:
         logger.exception("Failed to fetch OFF %s: %s", upc, e)
         try:
-            socketio.emit("off_error", {"upc": upc, "error": str(e)}, room=user_id)
+            socketio.emit("off_error", {"room": user_id, "data": {"upc": upc, "error": str(e)}}, room=user_id)
         except Exception:
             logger.exception("Failed to emit off_error")
         return None
 
     if (info["status"] == 0):
         logger.exception("OFF not found!")
-        socketio.emit("off_error", {"upc": upc, "error": "Not found"}, room=user_id)
+        socketio.emit("off_error", {"room": user_id, "data": {"upc": upc, "error": "Not found"}}, room=user_id)
         return None
     
     # compute categories / rating
@@ -170,7 +220,7 @@ def openfoodfacts_request(user_id, upc):
     try:
         #time.sleep(1)
         logger.info("Emitting lookup_update to room=%s", user_id)
-        socketio.emit("lookup_update", payload, room=user_id)
+        socketio.emit("lookup_update", {"room": user_id, "data": payload}, room=user_id)
     except Exception as e:
         logger.exception("Failed to emit lookup_update: %s", e)
     """

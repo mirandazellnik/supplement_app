@@ -59,6 +59,8 @@ def create_app():
 app = create_app()
 print("App created")
 
+
+# --- CONNECT ---
 @socketio.on("connect")
 def handle_connect(auth=None):
     #print("Connect event fired, auth:", auth)
@@ -66,17 +68,56 @@ def handle_connect(auth=None):
     if not token:
         logger.info("No token provided, rejecting")
         return False
+
     try:
         decoded = decode_token(token)
         user_id = str(decoded["sub"])
         from flask_socketio import join_room
         join_room(user_id)
         logger.info(f"User {user_id} connected to WebSocket")
-        #socketio.emit("lookup_update", {"junk":"test"}, room=user_id)
-        #logger.info(f"Emitted dummy lookup_update to room {user_id}")
+        #emit("connected", {"message": f"Connected as {user_id}"}, room=user_id)
     except Exception as e:
-        logger.info("Connect error:", e)
+        logger.error(f"Connect error: {e}")
         return False
+
+# --- JOIN ROOM ---
+@socketio.on("join_room")
+def handle_join(data):
+
+    token = data.get("token")
+    upc_or_id = data.get("upcOrId")
+    if not token or not upc_or_id:
+        return
+
+    try:
+        decoded = decode_token(token)
+        user_id = str(decoded["sub"])
+        room_name = f"{user_id}-{upc_or_id}"
+        from flask_socketio import join_room, emit
+        join_room(room_name)
+        logger.info(f"User {user_id} joined room {room_name}")
+        emit("room_ready", {"room": room_name}, room=room_name)
+    except Exception as e:
+        logger.error(f"Join room error: {e}")
+
+# --- LEAVE ROOM ---
+@socketio.on("leave_room")
+def handle_leave(data):
+    token = data.get("token")
+    upc_or_id = data.get("upcOrId")
+    if not token or not upc_or_id:
+        return
+
+    try:
+        decoded = decode_token(token)
+        user_id = str(decoded["sub"])
+        room_name = f"{user_id}-{upc_or_id}"
+        from flask_socketio import leave_room
+        leave_room(room_name)
+        logger.info(f"User {user_id} left room {room_name}")
+        #emit("left_room", {"room": room_name}, room=user_id)
+    except Exception as e:
+        logger.error(f"Leave room error: {e}")
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, use_reloader=False, debug=True)

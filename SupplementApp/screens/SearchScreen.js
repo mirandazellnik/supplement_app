@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { search } from "../api/supplements"
 import { useAlert } from "../contexts/AlertContext";
+import { StatusBar } from "expo-status-bar";
 
 export default function SearchScreen( {navigation} ) {
   const [query, setQuery] = useState("");
@@ -41,6 +42,7 @@ export default function SearchScreen( {navigation} ) {
 
   return (
     <LinearGradient colors={["#f9fafc", "#e6ebf2"]} style={styles.container}>
+      <StatusBar style="dark" backgroundColor="#f9fafc" />
       <TextInput
         style={styles.input}
         placeholder="Enter product name, brand, or ingredient"
@@ -69,7 +71,7 @@ export default function SearchScreen( {navigation} ) {
           (item.dsldId ? String(item.dsldId) : index.toString())
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.navigate("Product", {navigation, id: item._id, name: item._source.fullName, brand: item._source.brandName})}}>
+          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.navigate("Product", {id: item._id, name: item._source.fullName, brand: item._source.brandName, inStack: false})}}>
             <Text style={styles.resultName}>{item._source.fullName}</Text>
             <Text style={styles.resultBrand}>{item._source.brandName}</Text>
           </TouchableOpacity>

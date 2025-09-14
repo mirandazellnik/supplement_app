@@ -2,10 +2,15 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from "react"
 import { View, Text, BackHandler, StyleSheet } from "react-native";
 import { Camera, CameraView } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, {BottomSheetBackdrop} from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ProductScreen from "./ProductModal"; // import ProductScreen
 import { useFocusEffect, useNavigation, useIsFocused } from "@react-navigation/native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
 
 export default function QRScanner({navigation}) {
   const insets = useSafeAreaInsets();
@@ -20,6 +25,37 @@ export default function QRScanner({navigation}) {
   const snapPoints = useMemo(() => ["25%", "100%"], []);
 
   const isFocused = useIsFocused();
+
+  const [sheetVisible, setSheetVisible] = useState(true);
+
+  const [alreadyData, setAlreadyData] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Hide the bottom tab bar
+      navigation.getParent()?.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+    }, [navigation])
+  );
+
+
+  const openDeeperProduct = (screen, params) => {
+    //setSheetVisible(false); // hide BottomSheet
+    //sheetRef.current?.snapToIndex(-1); // close BottomSheet
+    //setAlreadyData(true);
+
+    navigation.navigate("BeyondScanner", {screen, params});
+  };
+
+  /*
+  useEffect(() => {
+    console.log("Scanner screen focused:", isFocused);
+    if (isFocused && alreadyData) {
+      // If returning to scanner and already viewed a product, reset
+      console.log("Resetting scanner state");
+      sheetRef.current?.snapToIndex(1); // open BottomSheet fully
+      setAlreadyData(false);
+    }
+  }, [isFocused]);*/
 
   // Request camera permission
   useEffect(() => {
@@ -73,7 +109,8 @@ export default function QRScanner({navigation}) {
     );
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor:"black" }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
       {isFocused && (
         <CameraView
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
@@ -99,6 +136,15 @@ export default function QRScanner({navigation}) {
         <Text style={[styles.overlayText, {color: !scanned ? "white" : "grey"}]}>{!scanned ? "Align barcode here" : "Barcode scanned!"}</Text>
       </View>
 
+      {/* Top-right Back Button */}
+      <TouchableOpacity
+        style={[styles.backButton, { top: insets.top + 20, zIndex: 0 }]} // safe area + margin
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={28} color="white" />
+      </TouchableOpacity>
+
+      {(
       <BottomSheet
         ref={sheetRef}
         index={-1}
@@ -106,14 +152,27 @@ export default function QRScanner({navigation}) {
         enablePanDownToClose
         onClose={handleCloseSheet}
         onChange={handleSheetChange}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop {...props} pressBehavior="none" disappearsOnIndex={-1} />
+        )}
       >
-        <ProductScreen upc={upc} sheetRef={sheetRef} navigation={navigation}/>
+        <ProductScreen upc={upc} sheetRef={sheetRef} navigation={navigation} openDeeperProduct={openDeeperProduct} />
       </BottomSheet>
+      )}
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    position: "absolute",
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.6)", // semi-transparent background
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
+  },
   overlayContainer: {
     position: "absolute",
     top: 0,

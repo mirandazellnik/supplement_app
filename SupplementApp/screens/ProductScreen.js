@@ -14,12 +14,13 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookupbyid, disconnectSocket, connectSocket } from "../api/supplements";
+import { lookupbyid, joinProductRoom, leaveProductRoom } from "../api/supplements";
 import {
   FlatList,
   ScrollView
 } from 'react-native-gesture-handler';
 import { AuthContext } from "../contexts/AuthContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
@@ -40,7 +41,8 @@ const CATEGORIES_PLACEHOLDER = [
 ];
 
 
-const ProductScreen = ({ id, navigation, name, brand }) => {
+const ProductScreen = ({ route, navigation }) => {
+  const { id, name, brand, inStack, fromHome } = route.params || {};
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
   const scanningRef = useRef(false);
@@ -64,41 +66,64 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
 
   const [upcLookup, setUpcLookup] = useState(null);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      // Hide the bottom tab bar
+      navigation.getParent()?.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+    }, [navigation])
+  );
+
   useEffect(() => {
     console.log("OPENED PRODUCT SCREEN, ID:", id)
     if (!id) return;
     // connect socket on mount
-    connectSocket(userToken,
-      (data) => {
-        if (data?.categories?.length) {
-          setCategories(data.categories);
-        }
-        if (data?.rating) {
-          setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
-        }
+    joinProductRoom(id, {
+          onUpdate: (data) => {
+            if (data?.categories?.length) {
+              setCategories(data.categories);
+            }
+            if (data?.rating) {
+              setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
+            }
+    
+            setLoadingCategories(false);
+          },
+          onError: (error) => {
+            console.log("Socket error:", error);
+            setLoadingCategories(false);
+            setCategoriesFailed(true);
+          },
+          onSimilar: (data) => {
+            if (data?.recommendations) {
+              setSimilarProducts(data.recommendations);
+            }
+            setLoadingRecs(false);
+          },
+          onSimilarError: (similarError) => {
+            console.log("Similar products error:", similarError);
+            setLoadingRecs(false);
+            setRecFailed(true);
+          },
+          onEssentials: (data) => {
+            if (data) {
+              setEssentials(data);
+            }
+            setLoadingEssentials(false);
+          },
+          onEssentialsError: (essentialError) => {
+            console.log("Essentials error:", essentialError);
+            setLoadingEssentials(false);
+            setEssentialsFailed(true);
+          },
+          onReady: () => {
+            setUpcLookup(id);
+            console.log("Socket connected, upcLookup set to", id);
+          },
+        });
+    console.log("Joined product room for ID:", id);
 
-        setLoadingCategories(false);
-      },
-      (error) => {console.error("Socket error:", error); setLoadingCategories(false); setCategoriesFailed(true);},
-      (data) => {
-        if (data?.recommendations) {
-          setSimilarProducts(data.recommendations);
-        }
-        setLoadingRecs(false);
-      },
-      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false); setRecFailed(true);},
-      (data) => {
-        if (data) {
-          setEssentials(data);
-        }
-        setLoadingEssentials(false);
-      },
-      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false); setEssentialsFailed(true);},
-      () => {setUpcLookup(id)}
-    );
-  
     return () => {
-      disconnectSocket();
+      leaveProductRoom(id);
     };
     }, [id]
   );
@@ -109,6 +134,7 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
     setProduct(null);
     setCategories([]);
     setSimilarProducts([]);
+    setEssentials([]);
 
     setLoadingProduct(true);
     setLoadingCategories(true);
@@ -120,7 +146,7 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
     setEssentialsFailed(false);
     setRecFailed(false);
 
-    setUpcLookup(null);
+    //setUpcLookup(null);
   }, [id]);
 
   // Fetch initial product info via REST
@@ -236,7 +262,7 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem} onPress={()=>{navigation.navigate("Essential", {essentialName: item.name})}}>
+          <TouchableOpacity style={styles.essentialItem} onPress={() => { if (fromHome) { navigation.push("EssentialScannerFromProductScanner", { essentialName: item.name }) } else { navigation.navigate("Essential", { essentialName: item.name }) } }}>
             <Text style={styles.essentialText}>{item.name}</Text>
           </TouchableOpacity>
         )}
@@ -288,6 +314,8 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
       )}
       
       {/* Similar products */}
+      {inStack ? null : (
+        <View>
       {notFound ? null : <Text style={styles.sectionTitle}>Similar Products</Text>}
       {recFailed && <Text>Unable to load similar products at this time.</Text>}
       {loadingRecs ? (
@@ -303,10 +331,10 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
             horizontal
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.upc}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingVertical: spacing.sm }}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.similarItem}>
+              <TouchableOpacity style={styles.similarItem} onPress={() => {navigation.push("Product", {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: false})}}>
                 <Image
                   source={require("../assets/images/vitamin-c.png")} 
                   style={styles.similarImage}
@@ -315,13 +343,13 @@ const ProductScreen = ({ id, navigation, name, brand }) => {
                   {item.name}
                 </Text>
                 <Text style={styles.similarManufacturer} numberOfLines={1}>
-                  {item.manufacturer}
+                  {item.brand}
                 </Text>
               </TouchableOpacity>
             )}
           />
         </>
-      ))}
+      ))}</View>)}
 
     </ScrollView>
   );

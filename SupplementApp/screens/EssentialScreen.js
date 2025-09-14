@@ -7,6 +7,8 @@ import StarRating from "../components/StarRating";
 
 import { get_essential } from "../api/essentials";
 import { ActivityIndicator } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 // Example data for the essential and its products
 const essential = {
@@ -64,6 +66,8 @@ const products = [
 const PRODUCT_IMAGE_SIZE = 60;
 
 const EssentialScreen = ({ navigation, essentialName }) => {
+    //const { essentialName } = route.params || {};
+
   //const [essentialName, setEssentialName] = useState("Vitamin C");
   const [essentialDesc, setEssentialDesc] = useState("");
   const [loadingDesc, setLoadingDesc] = useState(true);

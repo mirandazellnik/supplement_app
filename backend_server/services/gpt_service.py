@@ -77,7 +77,7 @@ For each one, provide a name, manufacturer, and UPC-A code.
 If you don't know the UPC-A code for a product, do not recommend the product.
 
 Please answer in JSON format like this:
-{{"recommendations": [{{"name": "Clean Vitamin D", "manufacturer": "HealthCorp", "upc": "123456789012"}},{{"name": "Health Boost XL", "manufacturer": "WellnessInc", "upc": "987654321098"}}]}}
+{{"recommendations": [{{"name": "Clean Vitamin D", "brand": "HealthCorp", "upc": "123456789012"}},{{"name": "Health Boost XL", "brand": "WellnessInc", "upc": "987654321098"}}]}}
 
 Respond ONLY with a valid JSON object. Do not wrap it in quotes or escape characters. Do not include any text before or after the JSON.
 Return the JSON inside a single top-level object, nothing else.

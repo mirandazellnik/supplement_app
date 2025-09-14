@@ -6,7 +6,7 @@ from backend_server.services.gpt_service import analyze_supplements, recommend_s
 from backend_server.services.llm_client import ask_openrouter
 from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
-from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request
+from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request, recommend_similar_by_essentials
 from backend_server.config import Config
 from backend_server.utils import api_requests
 
@@ -62,6 +62,7 @@ def preliminary_score_from_search(hit_source: dict) -> float:
 def lookup():
     data = request.get_json()
     barcode = data.get("barcode")
+    old_bar = barcode
     if not barcode:
         return jsonify({"error": "Missing barcode"}), 400
     barcode = format_barcode(barcode)
@@ -97,9 +98,10 @@ def lookup():
 
         # Trigger background task to fetch /label details
         try:
-            fetch_label_details.delay(str(user_id), str(_id))
-            recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
-            openfoodfacts_request.delay(str(user_id), str(barcode))
+            fetch_label_details.delay(str(user_id) + "-" + str(old_bar), str(_id), recommend_after=True)
+            #recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
+            #recommend_similar_by_essentials.delay(str(user_id), [p.get("fullName", ""), p.get("brandName", "")])
+            openfoodfacts_request.delay(str(user_id) + "-" + str(old_bar), str(barcode))
         except Exception as e:
             # if Celery is not available, still continue (optionally do synchronous fallback)
             print("Warning: failed to queue background task:", e)
@@ -158,7 +160,7 @@ def lookupbyid():
     try:
         # Trigger background task to fetch /label details
         try:
-            fetch_label_details.delay(str(user_id), str(dsld_id), recommend_after=True)
+            fetch_label_details.delay(str(user_id) + "-" + str(dsld_id), str(dsld_id), recommend_after=True)
             #recommend_similar_products.delay(str(user_id), str(_id), p.get("fullName", ""), p.get("brandName", ""))
             #openfoodfacts_request.delay(str(user_id), str(barcode))
         except Exception as e:

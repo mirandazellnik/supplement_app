@@ -14,7 +14,7 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookup, disconnectSocket, connectSocket } from "../api/supplements";
+import { lookup, joinProductRoom, leaveProductRoom } from "../api/supplements";
 import {
   FlatList
 } from 'react-native-gesture-handler';
@@ -39,7 +39,8 @@ const CATEGORIES_PLACEHOLDER = [
 ];
 
 
-const ProductScreen = ({ upc, sheetRef, navigation }) => {
+const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
+
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
   const scanningRef = useRef(false);
@@ -66,8 +67,8 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
   useEffect(() => {
     if (!upc) return;
     // connect socket on mount
-    connectSocket(userToken,
-      (data) => {
+    joinProductRoom(upc, {
+      onUpdate: (data) => {
         if (data?.categories?.length) {
           setCategories(data.categories);
         }
@@ -77,26 +78,41 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
 
         setLoadingCategories(false);
       },
-      (error) => {console.error("Socket error:", error); setLoadingCategories(false); setCategoriesFailed(true);},
-      (data) => {
+      onError: (error) => {
+        console.log("Socket error:", error);
+        setLoadingCategories(false);
+        setCategoriesFailed(true);
+      },
+      onSimilar: (data) => {
         if (data?.recommendations) {
           setSimilarProducts(data.recommendations);
         }
         setLoadingRecs(false);
       },
-      (similarError) => {console.error("Similar products error:", similarError); setLoadingRecs(false); setRecFailed(true);},
-      (data) => {
+      onSimilarError: (similarError) => {
+        console.log("Similar products error:", similarError);
+        setLoadingRecs(false);
+        setRecFailed(true);
+      },
+      onEssentials: (data) => {
         if (data) {
           setEssentials(data);
         }
         setLoadingEssentials(false);
       },
-      (essentialError) => {console.error("Essentials error:", essentialError); setLoadingEssentials(false); setEssentialsFailed(true);},
-      () => {setUpcLookup(upc)}
-    );
-  
+      onEssentialsError: (essentialError) => {
+        console.log("Essentials error:", essentialError);
+        setLoadingEssentials(false);
+        setEssentialsFailed(true);
+      },
+      onReady: () => {
+        setUpcLookup(upc);
+        console.log("Socket connected, upcLookup set to", upc);
+      },
+    });
+
     return () => {
-      disconnectSocket();
+      leaveProductRoom(upc);
     };
     }, [upc]
   );
@@ -118,7 +134,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
     setEssentialsFailed(false);
     setRecFailed(false);
 
-    setUpcLookup(null);
+    //setUpcLookup(null);
   }, [upc]);
 
   // Fetch initial product info via REST
@@ -230,7 +246,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem} onPress={()=>{navigation.navigate("Essential", {essentialName: item.name})}}>
+          <TouchableOpacity style={styles.essentialItem} onPress={() => { navigation.navigate("JustEssentialScreen", { essentialName: item.name }) }}>
             <Text style={styles.essentialText}>{item.name}</Text>
           </TouchableOpacity>
         )}
@@ -297,10 +313,10 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
             horizontal
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.upc}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingVertical: spacing.sm }}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.similarItem}>
+              <TouchableOpacity style={styles.similarItem} onPress={() => {openDeeperProduct("ProductScanner", {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true})}}>
                 <Image
                   source={require("../assets/images/vitamin-c.png")} 
                   style={styles.similarImage}
@@ -309,7 +325,7 @@ const ProductScreen = ({ upc, sheetRef, navigation }) => {
                   {item.name}
                 </Text>
                 <Text style={styles.similarManufacturer} numberOfLines={1}>
-                  {item.manufacturer}
+                  {item.brand}
                 </Text>
               </TouchableOpacity>
             )}
