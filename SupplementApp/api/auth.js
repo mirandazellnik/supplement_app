@@ -10,7 +10,7 @@ export async function login(username, password) {
     const res = await axios.post(`${API_URL}/login`, { username, password });
     return res.data; // contains access_token and user
   } catch (e) {
-    throw e.response?.data?.msg || "Login failed";
+    throw e.response?.data?.msg || "Login failed, please try again.";
   }
 }
 
@@ -19,7 +19,7 @@ export async function register(username, name, password) {
     const res = await axios.post(`${API_URL}/register`, { username, name, password });
     return res.data; // success message
   } catch (e) {
-    throw e.response?.data?.msg || "Registration failed";
+    throw e.response?.data?.msg || "Registration failed, please try again.";
   }
 }
 
@@ -28,6 +28,6 @@ export async function check_whether_user_exists(username) {
     const res = await axios.post(`${API_URL}/check_whether_user_exists`, { username });
     return res.data.exists; // true or false
   } catch (e) {
-    throw e.response?.data?.msg || "Failed to check user existence";
+    throw e.response?.data?.msg || "Registration failed, please try again.";
   }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, FlatList } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
@@ -12,6 +12,10 @@ import { useNavigation } from "@react-navigation/native";
 
 import { joinEssentialRoom } from "../api/socket/essentialSocket";
 import { leaveRoom } from "../api/socket/socket";
+import ProductImageById from "../components/ProductImageById";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useAlert } from "../contexts/AlertContext";
 
 const PRODUCT_IMAGE_SIZE = 60;
 
@@ -25,6 +29,9 @@ const EssentialScreen = ({ navigation, essentialName }) => {
 
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+
+  const bottomTabHeight = useBottomTabBarHeight()
+  const { showAlert } = useAlert()
 
   useEffect(() => {
     
@@ -59,7 +66,12 @@ const EssentialScreen = ({ navigation, essentialName }) => {
     if (!essentialNameToLookup) return;
 
     async function fetchEssential() {
-      const desc = await getEssential(essentialNameToLookup);
+      let desc;
+      try {
+        desc = await getEssential(essentialNameToLookup);
+      } catch (e) {
+        showAlert("Something went wrong", "Sorry, please try again later!")
+      }
       setEssentialDesc(desc);
       setLoadingDesc(false);
     }
@@ -67,8 +79,8 @@ const EssentialScreen = ({ navigation, essentialName }) => {
   }, [essentialNameToLookup]);
 
   const renderProduct = ({ item }) => (
-    <View style={styles.productBox}>
-      <Image source={item.image} style={styles.productImage} />
+    <TouchableOpacity onPress={() => {item?.id ? navigation.push("Product", {id: item.id, name: item.name, brand: item.brand, inStack: true}) : 1}} style={styles.productBox}>
+      <ProductImageById loading={loadingProducts} productId={item.id} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <View style={styles.ratingRow}>
@@ -76,18 +88,11 @@ const EssentialScreen = ({ navigation, essentialName }) => {
           <Text style={styles.ratingText}>{3}/5</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
-    <FlatList
-      data={products}
-      keyExtractor={(item) => item.id}
-      renderItem={renderProduct}
-      contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}
-      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-      ListHeaderComponent={
-        <>
+    <SafeAreaView edges={['left', 'right']} style={{ flex:1, paddingBottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.lg}}>
           <Text style={styles.essentialName}>{essentialName}</Text>
           {loadingDesc ? (
                   <View style={{ alignItems: "center", marginVertical: spacing.md }}>
@@ -97,9 +102,21 @@ const EssentialScreen = ({ navigation, essentialName }) => {
                 ) : (
           <Text style={styles.essentialDescription}>{essentialDesc}</Text>)}
           <Text style={styles.sectionTitle}>Products with {essentialName}</Text>
-        </>
-      }
+    { loadingProducts ? (
+                  <View style={{ alignItems: "center", marginVertical: spacing.md }}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text>Loading...</Text>
+                  </View>
+                ) :
+    <FlatList
+      data={products}
+      keyExtractor={(item) => item.id}
+      renderItem={renderProduct}
+      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+      contentContainerStyle={{ paddingBottom: bottomTabHeight }}
     />
+    }
+    </SafeAreaView>
   );
 };
 
@@ -138,7 +155,7 @@ const styles = StyleSheet.create({
   productImage: {
     width: PRODUCT_IMAGE_SIZE,
     height: PRODUCT_IMAGE_SIZE,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: colors.surface,
     marginRight: spacing.md,
   },

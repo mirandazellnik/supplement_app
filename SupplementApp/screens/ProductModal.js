@@ -13,7 +13,7 @@ import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
-import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { BottomSheetScrollView, BottomSheetFlatList, BottomSheetView } from "@gorhom/bottom-sheet";
 import { lookup } from "../api/supplements";
 import { joinProductRoom } from "../api/socket/supplementSocket";
 import { leaveRoom as leaveProductRoom } from "../api/socket/socket";
@@ -23,6 +23,7 @@ import {
 import { AuthContext } from "../contexts/AuthContext";
 import ProductImageById from "../components/ProductImageById";
 import { useAlert } from "../contexts/AlertContext";
+import { useAnimatedReaction, runOnJS } from "react-native-reanimated";
 
 const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
@@ -43,7 +44,7 @@ const CATEGORIES_PLACEHOLDER = [
 ];
 
 
-const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
+const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedSheetIndex}) => {
 
   const [expanded, setExpanded] = useState({});
   const anims = useRef({}).current;
@@ -68,7 +69,25 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
 
   const [upcLookup, setUpcLookup] = useState(null);
 
+  const [beenUp, setBeenUp] = useState(false);
+
   const { showAlert } = useAlert();
+
+  const [positionOfModal, setPositionOfModal] = useState(sharedSheetIndex.value);
+
+  useAnimatedReaction(
+    () => sharedSheetIndex.value,
+    (current) => {
+      runOnJS(setPositionOfModal)(current); // updates React state
+      if (current > 0) {
+        runOnJS(setBeenUp)(true);
+      }
+    }
+  );
+
+  useEffect(() => {
+    console.log('React state index changed:', positionOfModal);
+  }, [positionOfModal]);
 
   useEffect(() => {
     if (!upc) return;
@@ -141,6 +160,8 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
     setEssentialsFailed(false);
     setRecFailed(false);
 
+    setBeenUp(false);
+
     //setUpcLookup(null);
   }, [upc]);
 
@@ -157,7 +178,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
 
         setProduct({
           name: result?.name || "Unknown Product",
-          brand: result?.brand || "Unknown Brand",
+          brand: result?.brand || "Try scanning again!",
           image: result?.image || require("../assets/images/vitamin-c.png"),
           rating: result?.rating || 0,
           id: result?.id || null,
@@ -168,6 +189,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
         console.warn("Failed to fetch product:", e);
         setProduct({
           name: "Unknown Product",
+          brand: "Try scanning again!",
           image: require("../assets/images/vitamin-c.png"),
           rating: 0,
         });
@@ -218,9 +240,10 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
   }
 
   return (
-    <BottomSheetScrollView contentContainerStyle={{ padding: spacing.lg }} nestedScrollEnabled>
+    <BottomSheetScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop:0 }} nestedScrollEnabled>
+      {positionOfModal == 0 && !beenUp ? <Text style={[styles.essentialText, {alignSelf:"center", color:"#777777" }]}>Swipe up to see more</Text> : null}
       {/* Top section */}
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, {paddingTop: spacing.lg}]}>
         <ProductImageById loading={loadingProduct && !notFound} productId={product.id} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>
           <Text style={styles.productName} numberOfLines={2} adjustsFontSizeToFit>{product.name}</Text>
@@ -228,7 +251,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
           <View style={styles.starsAndButtonRow}>
             <View style={styles.ratingRow}>
               <StarRating rating={product.rating} size={20} gap={2} />
-              <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
+              <Text style={styles.ratingText}>{product.rating.toFixed(1) == 0 ? "??" : product.rating.toFixed(1)}/5</Text>
             </View>
             <TouchableOpacity onPress={() => {showAlert("Cannot buy", "Sorry, one-click direct buying is not yet available!", true)}} style={styles.purchaseIconButton}>
               <Ionicons name="cart-outline" size={24} color={colors.primary} />

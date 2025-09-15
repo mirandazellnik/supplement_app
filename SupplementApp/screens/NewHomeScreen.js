@@ -41,15 +41,15 @@ export default function HomeScreen({ navigation }) {
             onPress={() => {}}
           >
             <Text style={styles.title} adjustsFontSizeToFit numberOfLines={2}>Your Plan</Text>
-            <Text style={styles.subtitle}>Helpful info here.</Text>
+            <Text style={styles.subtitle}>This feature is not yet available!</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.cardSquare, { width: squareWidth, height: squareWidth }]}
             onPress={() => {}}
           >
-            <Text style={styles.title}>Box 2</Text>
-            <Text style={styles.subtitle}>More details here.</Text>
+            <Text style={styles.title}>Update Goals</Text>
+            <Text style={styles.subtitle}>This feature is not yet available!</Text>
           </TouchableOpacity>
         </View>
 

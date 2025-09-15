@@ -82,7 +82,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Profile" options={{ headerShown: true }}>
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
-      <Tab.Screen name="Personal Recommendations" options={{ headerShown: true }} component={PersonalRecommendations}/>
+      {/*<Tab.Screen name="Personal Recommendations" options={{ headerShown: true }} component={PersonalRecommendations}/>*/}
       {/*<Tab.Screen name="Product" component={ProductScreen} />*/}
       {/*<Tab.Screen name="Essentials" component={EssentialScreen} />*/}
       {/*<Tab.Screen name="Scanner" component={QRScanner} />*/}

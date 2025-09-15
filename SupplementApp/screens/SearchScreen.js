@@ -71,7 +71,7 @@ export default function SearchScreen( {navigation} ) {
           (item.dsldId ? String(item.dsldId) : index.toString())
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.navigate("Product", {id: item._id, name: item._source.fullName, brand: item._source.brandName, inStack: false})}}>
+          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.push("Product", {id: item._id, name: item._source.fullName, brand: item._source.brandName, inStack: false})}}>
             <Text style={styles.resultName}>{item._source.fullName}</Text>
             <Text style={styles.resultBrand}>{item._source.brandName}</Text>
           </TouchableOpacity>

@@ -8,7 +8,10 @@ import { AlertProvider } from "./contexts/AlertContext";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { connectSocket } from "./api/socket/socket";
+import { connectSocket, disconnectSocket } from "./api/socket/socket";
+import axios from "axios";
+
+axios.defaults.timeout = 10000
 
 function AppContent() {
   const { userToken, setupComplete } = useContext(AuthContext);
@@ -18,6 +21,8 @@ function AppContent() {
       connectSocket(userToken, () => {console.log("FULLY CONNECTED SOCKET IN APP.JS")});
       console.log("connecting socket with token:", userToken);
     }
+
+    return () => {console.log("disconnecting!"); disconnectSocket()}
   }, [userToken]);
 
   if (userToken === undefined) {
@@ -29,7 +34,7 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer key={userToken}>
       {userToken ? (!setupComplete ? <OnboardingNavigator /> : <BottomTabs />) : <AuthStack />}
     </NavigationContainer>
   );

@@ -10,7 +10,7 @@ import { useFocusEffect, useNavigation, useIsFocused } from "@react-navigation/n
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useSharedValue } from 'react-native-reanimated';
 
 export default function QRScanner({navigation}) {
   const insets = useSafeAreaInsets();
@@ -29,6 +29,9 @@ export default function QRScanner({navigation}) {
   const [sheetVisible, setSheetVisible] = useState(true);
 
   const [alreadyData, setAlreadyData] = useState(false);
+
+  const sharedSheetIndex = useSharedValue(0);
+
 
   useFocusEffect(
     React.useCallback(() => {
@@ -82,6 +85,7 @@ export default function QRScanner({navigation}) {
   // Track BottomSheet index
   const handleSheetChange = useCallback((index: number) => {
     setSheetIndex(index);
+    sharedSheetIndex.value = index;
   }, []);
 
   // Handle Android hardware back button
@@ -156,7 +160,7 @@ export default function QRScanner({navigation}) {
           <BottomSheetBackdrop {...props} pressBehavior="none" disappearsOnIndex={-1} />
         )}
       >
-        <ProductScreen upc={upc} sheetRef={sheetRef} navigation={navigation} openDeeperProduct={openDeeperProduct} />
+        <ProductScreen upc={upc} sheetRef={sheetRef} navigation={navigation} openDeeperProduct={openDeeperProduct} sharedSheetIndex={sharedSheetIndex} />
       </BottomSheet>
       )}
       </SafeAreaView>
