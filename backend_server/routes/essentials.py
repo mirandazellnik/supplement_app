@@ -6,7 +6,7 @@ from backend_server.services.gpt_service import analyze_supplements, recommend_s
 from backend_server.services.llm_client import ask_openrouter
 from backend_server.services.vector_store import vector_search
 from backend_server.utils.barcodes import format_barcode
-from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request
+from backend_server.services.tasks import get_products_for_essential
 from backend_server.config import Config
 from backend_server.utils import api_requests
 
@@ -30,4 +30,6 @@ Give me a short, roughly 3-sentence blurb about {essential_name}, as it is used 
         print("Error with essential lookup", e)
         return jsonify({"error": str(e)}), 500
     
+    get_products_for_essential.delay(user_id, essential_name)
+
     return response

@@ -1,20 +1,21 @@
 import { getSocket, getToken, connectSocket, setCallbacks } from "./socket";
 
-export function joinEssentialRoom(essentialName, {e_onProductsUpdate, e_onProductsError}) {
-    const socket = getSocket();
-    const constToken = getToken();
+export function joinEssentialRoom(essentialName, {e_onProducts, e_onProductsError, onReady}) {
+  const socket = getSocket();
+  const constToken = getToken();
 
-    if (!socket) {
-    connectSocket(constToken, () => {
-      joinEssentialRoom(essentialName, {e_onProductsUpdate, e_onProductsError});
-    });
-    return;
+  if (!socket) {
+  connectSocket(constToken, () => {
+    joinEssentialRoom(essentialName, {e_onProducts, e_onProductsError, onReady});
+  });
+  return;
   }
 
-  setCallbacks(essentialName, {
-    e_onProductsUpdate,
-    e_onProductsError
+  setCallbacks("e_" + essentialName, {
+    e_onProducts,
+    e_onProductsError,
+    onReady
   });
 
-  socket.emit("join_room", { essentialName: "e_" + essentialName, token: constToken });
+  socket.emit("join_room", { upcOrId: "e_" + essentialName, token: constToken });
 };

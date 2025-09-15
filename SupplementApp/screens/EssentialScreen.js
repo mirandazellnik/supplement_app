@@ -5,63 +5,13 @@ import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
 import StarRating from "../components/StarRating";
 
-import { get_essential } from "../api/essentials";
+import { getEssential } from "../api/essentials";
 import { ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 
-// Example data for the essential and its products
-const essential = {
-  id: "1",
-  name: "Vitamin C",
-  description:
-    "Vitamin C is an essential nutrient involved in the repair of tissue and the enzymatic production of certain neurotransmitters. It is required for the functioning of several enzymes and is important for immune system function.",
-};
-
-const products = [
-  {
-    id: "p1",
-    name: "Super Immune Boost",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 4.4,
-  },
-  {
-    id: "p2",
-    name: "Daily C Complex",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 4.0,
-  },
-  {
-    id: "p4",
-    name: "C-1000 Plus",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 3.7,
-  },
-  /*  {
-    id: "p5",
-    name: "C-1000 Plus",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 3.7,
-  },
-    {
-    id: "p6",
-    name: "C-1000 Plus",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 3.7,
-  },
-    {
-    id: "p7",
-    name: "C-1000 Plus",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 3.7,
-  },
-    {
-    id: "p8",
-    name: "C-1000 Plus",
-    image: require("../assets/images/vitamin-c.png"),
-    rating: 3.7,
-  },*/
-];
+import { joinEssentialRoom } from "../api/socket/essentialSocket";
+import { leaveRoom } from "../api/socket/socket";
 
 const PRODUCT_IMAGE_SIZE = 60;
 
@@ -71,22 +21,50 @@ const EssentialScreen = ({ navigation, essentialName }) => {
   //const [essentialName, setEssentialName] = useState("Vitamin C");
   const [essentialDesc, setEssentialDesc] = useState("");
   const [loadingDesc, setLoadingDesc] = useState(true);
+  const [essentialNameToLookup, setEssentialNameToLookup] = useState(essentialName);
+
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
-    async function fetchEssential() {
-      const desc = await get_essential(essentialName);
-      setEssentialDesc(desc);
-      setLoadingDesc(false);
-    }
-    fetchEssential();
-  }, 
-  [essentialName])
+    
+    joinEssentialRoom(essentialName, {
+      e_onProducts: (products) => {
+        console.log("calllback!")
+        setProducts(products["products"]);
+        setLoadingProducts(false);
+      },
+      e_onProductsError: (error) => {
+        console.error("Error fetching products:", error);
+        setLoadingProducts(false);
+      },
+      onReady: () => {
+        setEssentialNameToLookup(essentialName);
+      },
+    });
+
+    return () => {
+      leaveRoom("e_" + essentialName);
+    };
+  }, [essentialName]);
 
   useEffect(() => {
     setEssentialDesc("");
     setLoadingDesc(true);
+    setProducts([]);
+    setLoadingProducts(true);
+  }, [essentialName]);
 
-  }, [essentialName])
+  useEffect(() => {
+    if (!essentialNameToLookup) return;
+
+    async function fetchEssential() {
+      const desc = await getEssential(essentialNameToLookup);
+      setEssentialDesc(desc);
+      setLoadingDesc(false);
+    }
+    fetchEssential();
+  }, [essentialNameToLookup]);
 
   const renderProduct = ({ item }) => (
     <View style={styles.productBox}>
@@ -94,8 +72,8 @@ const EssentialScreen = ({ navigation, essentialName }) => {
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <View style={styles.ratingRow}>
-          <StarRating rating={item.rating} size={18} gap={2} />
-          <Text style={styles.ratingText}>{item.rating.toFixed(1)}/5</Text>
+          <StarRating rating={3} size={18} gap={2} />
+          <Text style={styles.ratingText}>{3}/5</Text>
         </View>
       </View>
     </View>

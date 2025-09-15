@@ -242,3 +242,49 @@ def openfoodfacts_request(user_id, upc):
     """
 
     return None
+
+@celery.task
+def get_products_for_essential(user_id, essential_name):
+    """
+    Fetch products related to the given essential from NIH DSLD API.
+    Returns a list of products.
+    """
+    try:
+        logger.info("Fetching products for essential=%s (emit to room=%s)", essential_name, user_id)
+        r = api_requests.get(f"https://api.ods.od.nih.gov/dsld/v9/search-filter/?q=%22{essential_name}%22", timeout=15)
+        r.raise_for_status()
+        resp_json = r.json()
+        products = resp_json.get("hits", [])
+        results = []
+        for product in products[:20]:  # limit to top 20
+            p = product.get("_source", {})
+            results.append({
+                "id": str(product.get("_id")),
+                "name": p.get("fullName"),
+                "brand": p.get("brandName"),
+                "image": p.get("thumbnail"),
+                "netContents": p.get("netContents"),
+            })
+        
+        # Prune duplicates
+        results_new = []
+        products_already_listed = []
+
+        for hit in results:
+            try:
+                if hit["name"] + hit["brand"] in products_already_listed:
+                    continue
+                else:
+                    products_already_listed.append(hit["name"] + hit["brand"])
+                    results_new.append(hit)
+            except:
+                pass
+        
+        roomName = str(user_id) + "-e_" + essential_name
+        print(roomName + "room name <---------")
+
+        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": results_new}}, room=roomName)
+    except Exception as e:
+        logger.exception("Failed to fetch products for essential %s: %s", essential_name, e)
+        socketio.emit("e_essential_products_error", {"room": roomName, "data": {"essential": essential_name, "error": str(e)}}, room=roomName)
+    return None

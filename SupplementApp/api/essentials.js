@@ -7,7 +7,7 @@ const BASE_URL = require("./api_url.json").api_url;
 const API_URL = BASE_URL + "/api/essentials";
 
 // --- LOOKUP FUNCTION ---
-export async function get_essential(essentialName) {
+export async function getEssential(essentialName) {
   const token = await getToken();
   try {
     const res = await axios.post(
