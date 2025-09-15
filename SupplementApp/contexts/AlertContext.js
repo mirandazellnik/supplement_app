@@ -12,9 +12,9 @@ export const AlertProvider = ({ children }) => {
   /**
    * showAlert("title") or showAlert("title", "message")
    */
-  const showAlert = (title, message) => {
+  const showAlert = (title, message, light=false) => {
     return new Promise((resolve) => {
-      setQueue((q) => [...q, { title, message, resolve }]);
+      setQueue((q) => [...q, { title, message, resolve, light }]);
     });
   };
 
@@ -38,6 +38,7 @@ export const AlertProvider = ({ children }) => {
           title={currentAlert.title}
           message={currentAlert.message}
           onClose={handleNext}
+          light={currentAlert.light}
         />
       )}
     </AlertContext.Provider>

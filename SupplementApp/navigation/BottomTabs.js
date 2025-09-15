@@ -29,28 +29,38 @@ const Tab = createBottomTabNavigator();
 //options={{ headerShown: false }}
 export default function BottomTabs() {
   return (
-    <Tab.Navigator 
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
+<Tab.Navigator
+  screenOptions={({ route }) => ({
+    tabBarIcon: ({ color, size, focused }) => {
+      let iconName;
 
-          if (route.name === "Home") iconName = "home";
-          else if (route.name === "Profile") iconName = "person";
-          else if (route.name === "Scanner") iconName = "barcode-outline";
-          else if (route.name === "Search") iconName = "search-outline";
+      switch (route.name) {
+        case "Home":
+          iconName = focused ? "home" : "home-outline";
+          break;
+        case "Profile":
+          iconName = focused ? "person" : "person-outline";
+          break;
+        case "Scanner":
+          iconName = focused ? "barcode" : "barcode-outline";
+          break;
+        case "Search":
+          iconName = focused ? "search" : "search-outline";
+          break;
+      }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: "#29f",
-        tabBarInactiveTintColor: "gray",
-      
-      })}
-    >
-      {/*<Tab.Screen name="Home" component={HomeScreen} />*/}
-      <Tab.Screen
-  name="Home"
-  component={HomeStack}
-  options={({ route }) => {
+      return <Ionicons name={iconName} size={size} color={color} />;
+    },
+    tabBarActiveTintColor: "#29f",
+    tabBarInactiveTintColor: "#000",
+  })}>
+
+
+
+    <Tab.Screen
+      name="Home"
+      component={HomeStack}
+      options={({ route }) => {
     const focusedRouteName = getDeepestRouteName(route);
     console.log("->>>>> REAL FOCUSED ROUTE NAME:", focusedRouteName);
 

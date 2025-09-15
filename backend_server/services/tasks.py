@@ -118,6 +118,22 @@ def recommend_similar_by_essentials(user_id, essentials):
                 "image": p.get("thumbnail"),
                 "netContents": p.get("netContents"),
             })
+        
+        results_new = []
+
+        products_already_listed = []
+
+        for hit in recommendations:
+            try:
+                if hit["name"] + hit["brand"] in products_already_listed:
+                    continue
+                else:
+                    products_already_listed.append(hit["name"] + hit["brand"])
+                    results_new.append(hit)
+            except:
+                pass
+        
+        recommendations = results_new
         recommendations = {"recommendations": recommendations}
 
     except Exception as e:

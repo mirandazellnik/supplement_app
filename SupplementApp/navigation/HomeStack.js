@@ -13,8 +13,8 @@ const Tab = createBottomTabNavigator();
 
 function HomeAndScanner() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Navigator screenOptions={{ headerShown: true,  animation: 'slide_from_bottom' }}>
+      <Stack.Screen name="HomeScreen" options={{ headerShown:false, title: "Home" }} component={HomeScreen} />
       <Stack.Screen name="Barcode Scanner" component={QRScanner} options={{ headerShown: false, }} />
     </Stack.Navigator>
   );
@@ -66,7 +66,7 @@ export default function HomeStack( { navigation } ) {
         headerShown: false,
       }}
     >
-      <Tab.Screen name="Home" options={{ headerShown: false, tabBarStyle: { display: "none" } }} component={HomeAndScanner} />
+      <Tab.Screen name="HomeAndScanner" options={{ headerShown: false, tabBarStyle: { display: "none" } }} component={HomeAndScanner} />
       <Tab.Screen name="BeyondScanner" options={{ headerShown: false, tabBarStyle: { display: "none" } }} component={BeyondScanner} />
       <Tab.Screen name="JustEssentialScreen">
         {props => <JustEssentialScreen {...props} essentialName={props.route.params?.essentialName} />}

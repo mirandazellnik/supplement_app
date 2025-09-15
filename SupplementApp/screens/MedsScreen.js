@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,16 +8,39 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { submitSetup } from "../api/user";
 import { AuthContext } from "../contexts/AuthContext";
 import { useAlert } from "../contexts/AlertContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MedsScreen({ navigation, meds, setMeds, selectedGoals }) {
   const [input, setInput] = useState("");
+  const [focusedInput, setFocusedInput] = useState(false);
   const { setSetupComplete, logout } = useContext(AuthContext);
   const { showAlert } = useAlert();
+
+  const inputAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(inputAnim, {
+      toValue: focusedInput ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [focusedInput]);
+
+  const interpolateBackground = inputAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.3)"],
+  });
+
+  const interpolateShadow = inputAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 8],
+  });
 
   const addMed = () => {
     if (input.trim()) {
@@ -40,6 +63,7 @@ export default function MedsScreen({ navigation, meds, setMeds, selectedGoals })
 
   return (
     <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }}>
       {/* Top-right logout */}
       <View style={styles.topRight}>
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -54,22 +78,42 @@ export default function MedsScreen({ navigation, meds, setMeds, selectedGoals })
         <View style={styles.content}>
           {/* Header */}
           <Text style={styles.title}>Add Your Current Meds</Text>
-
+          
           {/* Input Row */}
           <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Medication name"
-              placeholderTextColor="#ddd"
-              value={input}
-              onChangeText={setInput}
-            />
+            <Animated.View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: interpolateBackground,
+                  shadowOpacity: inputAnim,
+                  shadowRadius: interpolateShadow,
+                },
+              ]}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder="Medication name"
+                placeholderTextColor="#ddd"
+                value={input}
+                onChangeText={setInput}
+                onFocus={() => setFocusedInput(true)}
+                onBlur={() => setFocusedInput(false)}
+                cursorColor="#fff"
+              />
+            </Animated.View>
             <TouchableOpacity style={styles.addButton} onPress={addMed}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
+          
 
           {/* Scrollable Med List */}
+          {meds.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: "top" }}>
+              <Text style={styles.smallText}>Enter the name of a medication and click the + button to add it.</Text>
+            </View>
+          ) : (
           <FlatList
             data={meds}
             keyExtractor={(item, index) => index.toString()}
@@ -87,7 +131,7 @@ export default function MedsScreen({ navigation, meds, setMeds, selectedGoals })
               </View>
             )}
             keyboardShouldPersistTaps="handled"
-          />
+          /> )}
 
           {/* Fixed Bottom Buttons */}
           <View style={styles.navButtons}>
@@ -98,15 +142,15 @@ export default function MedsScreen({ navigation, meds, setMeds, selectedGoals })
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
-              <Text style={styles.submitButtonText}>Submit</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>
+                {meds.length > 0 ? "Submit" : "Skip"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
@@ -124,13 +168,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
+    height: 40,
+    justifyContent: "center",
   },
   logoutText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-
+  smallText: {
+    color: "#fff",
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: "center",
+  },
   content: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 100, // leave space below logout
+    paddingTop: 40, // leave space below logout
     paddingBottom: 40,
     justifyContent: "space-between",
   },
@@ -145,17 +196,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 20,
   },
-  input: {
+  inputWrapper: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    color: "#fff",
     borderRadius: 12,
+    marginRight: 10,
+    shadowColor: "#fff",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  input: {
+    color: "#fff",
     padding: 15,
     fontSize: 16,
+    backgroundColor: "transparent",
   },
   addButton: {
     backgroundColor: "#fff",
-    marginLeft: 10,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -175,26 +232,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "rgba(255,255,255,0.1)",
-    paddingVertical: 10, // smaller than add button
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
     marginBottom: 8,
-    alignItems: "center", // vertically center text and button
+    alignItems: "center",
   },
   medText: { color: "#fff", fontSize: 16 },
-removeButton: {
-  backgroundColor: "#ff6b6b",
-  borderRadius: 12,
-  paddingHorizontal: 12,
-  paddingVertical: 6, // small padding to reduce height
-  justifyContent: "center",
-  alignItems: "center",
-},
-removeButtonText: {
-  color: "#fff",
-  fontWeight: "700",
-  fontSize: 16, // smaller than the add button
-},
+  removeButton: {
+    backgroundColor: "#ff6b6b",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removeButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
   navButtons: {
     flexDirection: "row",
     justifyContent: "space-between",

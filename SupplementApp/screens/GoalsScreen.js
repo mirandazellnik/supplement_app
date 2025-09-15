@@ -68,7 +68,7 @@ export default function GoalsScreen({ navigation, selectedGoals, setSelectedGoal
             style={styles.nextButton}
             onPress={() => navigation.navigate("MedsPage")}
           >
-            <Text style={styles.nextButtonText}>Next</Text>
+            <Text style={styles.nextButtonText}>{(selectedGoals.length > 0) ? "Next" : "Skip"}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

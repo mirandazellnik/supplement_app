@@ -15,7 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 const BOX_HEIGHT = 180;
 const screenHeight = Dimensions.get("window").height;
 
-export default function CustomAlert({ visible, title, message, onClose }) {
+export default function CustomAlert({ visible, title, message, onClose, light=false }) {
   const slideAnim = useRef(new Animated.Value(50)).current; // slightly below center
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -94,13 +94,14 @@ export default function CustomAlert({ visible, title, message, onClose }) {
             {
               transform: [{ translateY: slideAnim }],
               opacity: opacityAnim,
+              backgroundColor: light ? "#fff" : "#2a2a2a",
             },
           ]}
         >
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>OK</Text>
+          <Text style={[styles.title, { color: light ? "#000" : "#fff" }]}>{title}</Text>
+          <Text style={[styles.message, { color: light ? "#333" : "#ddd" }]}>{message}</Text>
+          <TouchableOpacity style={[styles.button, { backgroundColor: light ? "#85baff" : "#6a11cb" }]} onPress={onClose}>
+            <Text style={[styles.buttonText, { color: light ? "#000" : "#fff" }]}>OK</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

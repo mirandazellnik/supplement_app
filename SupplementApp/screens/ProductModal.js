@@ -19,6 +19,8 @@ import {
   FlatList
 } from 'react-native-gesture-handler';
 import { AuthContext } from "../contexts/AuthContext";
+import ProductImageById from "../components/ProductImageById";
+import { useAlert } from "../contexts/AlertContext";
 
 const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
@@ -63,6 +65,8 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
   const [essentialsFailed, setEssentialsFailed] = useState(false);
 
   const [upcLookup, setUpcLookup] = useState(null);
+
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (!upc) return;
@@ -153,6 +157,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
           brand: result?.brand || "Unknown Brand",
           image: result?.image || require("../assets/images/vitamin-c.png"),
           rating: result?.rating || 0,
+          id: result?.id || null,
         });
 
         console.log("Initial product data:", result);
@@ -213,7 +218,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
     <BottomSheetScrollView contentContainerStyle={{ padding: spacing.lg }} nestedScrollEnabled>
       {/* Top section */}
       <View style={styles.topRow}>
-        <Image source={product.image} style={styles.productImage} />
+        <ProductImageById loading={loadingProduct && !notFound} productId={product.id} style={styles.productImage} />
         <View style={styles.titleStarsContainer}>
           <Text style={styles.productName} numberOfLines={2} adjustsFontSizeToFit>{product.name}</Text>
           <Text style={styles.brandName} numberOfLines={1} adjustsFontSizeToFit>{product.brand}</Text>
@@ -222,7 +227,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
               <StarRating rating={product.rating} size={20} gap={2} />
               <Text style={styles.ratingText}>{product.rating.toFixed(1)}/5</Text>
             </View>
-            <TouchableOpacity style={styles.purchaseIconButton}>
+            <TouchableOpacity onPress={() => {showAlert("Cannot buy", "Sorry, one-click direct buying is not yet available!", true)}} style={styles.purchaseIconButton}>
               <Ionicons name="cart-outline" size={24} color={colors.primary} />
               <Text style={styles.buyText}>BUY</Text>
             </TouchableOpacity>
@@ -317,10 +322,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
             contentContainerStyle={{ paddingVertical: spacing.sm }}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.similarItem} onPress={() => {openDeeperProduct("ProductScanner", {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true})}}>
-                <Image
-                  source={require("../assets/images/vitamin-c.png")} 
-                  style={styles.similarImage}
-                />
+                <ProductImageById loading={loadingProduct && !notFound} productId={item.id} style={styles.similarImage} />
                 <Text style={styles.similarName} numberOfLines={2}>
                   {item.name}
                 </Text>
@@ -339,7 +341,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
 
 const styles = StyleSheet.create({
   topRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.md },
-  productImage: { width: 70, height: 70, borderRadius: 16, marginRight: spacing.md, backgroundColor: colors.surface },
+  productImage: { width: 80, height: 80, borderRadius: 8, marginRight: spacing.md, backgroundColor: colors.surface },
   titleStarsContainer: { flex: 1, flexDirection: "column", justifyContent: "center" },
   productName: { ...typography.h2, color: colors.textPrimary, fontWeight: "bold", flexShrink: 1, marginBottom: 2 },
   starsAndButtonRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
@@ -366,7 +368,7 @@ const styles = StyleSheet.create({
 
   // Similar products styles
   similarItem: { backgroundColor: colors.background, borderRadius: 16, width: 150, padding: spacing.sm, marginRight: spacing.md, alignItems: "center", elevation: 2 },
-  similarImage: { width: 100, height: 100, borderRadius: 12, marginBottom: spacing.sm, backgroundColor: colors.surface },
+  similarImage: { width: 100, height: 100, borderRadius: 8, marginBottom: spacing.sm, backgroundColor: colors.surface },
   similarName: { color: colors.textPrimary, fontWeight: "600", fontSize: 14, textAlign: "center" },
   similarManufacturer: { color: colors.textSecondary, fontSize: 12, marginTop: 2, textAlign: "center" },
   
