@@ -127,6 +127,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct }) => {
     setProduct(null);
     setCategories([]);
     setSimilarProducts([]);
+    setEssentials([]);
 
     setLoadingProduct(true);
     setLoadingCategories(true);
