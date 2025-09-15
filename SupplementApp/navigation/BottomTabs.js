@@ -14,6 +14,9 @@ import SearchProductsStack from "../navigation/SearchProductsStack"
 import HomeStack from "./HomeStack";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 
+import PersonalRecommendations from "../screens/PersonalRecommendations";
+
+
 function getDeepestRouteName(route) {
   let currentRoute = route;
 
@@ -79,6 +82,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Profile" options={{ headerShown: true }}>
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
+      <Tab.Screen name="Personal Recommendations" options={{ headerShown: true }} component={PersonalRecommendations}/>
       {/*<Tab.Screen name="Product" component={ProductScreen} />*/}
       {/*<Tab.Screen name="Essentials" component={EssentialScreen} />*/}
       {/*<Tab.Screen name="Scanner" component={QRScanner} />*/}

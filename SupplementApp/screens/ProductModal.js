@@ -14,7 +14,9 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookup, joinProductRoom, leaveProductRoom } from "../api/supplements";
+import { lookup } from "../api/supplements";
+import { joinProductRoom } from "../api/socket/supplementSocket";
+import { leaveRoom as leaveProductRoom } from "../api/socket/socket";
 import {
   FlatList
 } from 'react-native-gesture-handler';

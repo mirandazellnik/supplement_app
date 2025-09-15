@@ -13,7 +13,9 @@ import { typography } from "../styles/typography";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "../components/StarRating";
 import { BottomSheetScrollView, BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { lookupbyid, joinProductRoom, leaveProductRoom } from "../api/supplements";
+import { lookupbyid } from "../api/supplements";
+import { joinProductRoom } from "../api/socket/supplementSocket";
+import { leaveRoom as leaveProductRoom } from "../api/socket/socket";
 import {
   FlatList,
   ScrollView

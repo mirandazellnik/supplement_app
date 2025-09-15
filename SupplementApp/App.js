@@ -8,7 +8,7 @@ import { AlertProvider } from "./contexts/AlertContext";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { connectSocket } from "./api/supplements";
+import { connectSocket } from "./api/socket/socket";
 
 function AppContent() {
   const { userToken, setupComplete } = useContext(AuthContext);
