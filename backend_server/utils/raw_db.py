@@ -42,7 +42,7 @@ else:
         """
         # Use a distinct key prefix to avoid collisions with your API cache
         logging.info("Using real DB for barcode lookup.")
-        found_json = None
+        label_json = None
 
         cache_key = f"label:upc:{upc}"
 
