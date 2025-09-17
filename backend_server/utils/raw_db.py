@@ -17,12 +17,12 @@ NIH_API_URL = Config.NIH_API_URL
 class SpoofedResponse:
     def __init__(self, json):
         if json:
-            self.json = {"hits":[json]}
+            self.internaljson = {"hits":[json]}
         else:
-            self.json = {"hits":[]}
+            self.internaljson = {"hits":[]}
     
     def json(self):
-        return self.json
+        return self.internaljson
     
     def raise_for_status(self):
         return
@@ -43,6 +43,8 @@ else:
         # Use a distinct key prefix to avoid collisions with your API cache
         logging.info("Using real DB for barcode lookup.")
         label_json = None
+
+        upc = upc.replace("%20", " ")
 
         cache_key = f"label:upc:{upc}"
 
