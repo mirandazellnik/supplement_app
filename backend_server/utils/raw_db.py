@@ -50,7 +50,7 @@ else:
         cached = redis_client.get(cache_key)
         if cached:
             logging.info(f"[LABELS] UPC {upc} fetched from cache")
-            return json.loads(cached)
+            label_json = json.loads(cached)
 
         # 2️⃣ Fetch from PostgreSQL if not cached
         with conn.cursor() as cur:
