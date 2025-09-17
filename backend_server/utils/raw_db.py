@@ -68,4 +68,9 @@ else:
             redis_client.setex(cache_key, CACHE_EXPIRE, json.dumps(label_json))
             logging.info(f"[LABELS] UPC {upc} fetched from DB and cached")
         
+        logging.info(f"JSON 1: {label_json}")
+        j2 = api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
+        j2 = j2.json()
+        logging.info(f"JSON 2: {j2}")
+        
         return SpoofedResponse(label_json)
