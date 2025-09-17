@@ -7,6 +7,7 @@ class Config:
     DEBUG = os.getenv("DEBUG", "True").lower() == "true"
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     NIH_API_KEY = os.getenv("NIH_API_KEY")
+    NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
 
     #OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 

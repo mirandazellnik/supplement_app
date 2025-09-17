@@ -13,6 +13,7 @@ from backend_server.config import Config
 REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"  # Provided by Railway
 CACHE_EXPIRE = 30 * 24 * 60 * 60  # 30 days
 ONE_MINUTE = 60  # for rate limit
+NIH_API_URL = Config.NIH_API_URL
 
 # --- Setup caching with Redis ---
 redis_client = redis.from_url(REDIS_URL)
@@ -92,3 +93,8 @@ if __name__ == "__main__":
     print("First request:", r1.from_cache)  # Should print False
     print(f"Second request took: {duration2} seconds")
     print("Second request:", r2.from_cache)  # Should print True
+
+def dsld_get(path, params=None):
+    r = get(f"{NIH_API_URL}{path}", params=params, timeout=15)
+    r.raise_for_status()
+    return r.json()

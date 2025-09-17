@@ -9,8 +9,9 @@ from backend_server.utils.barcodes import format_barcode
 from backend_server.services.tasks import fetch_label_details, recommend_similar_products, openfoodfacts_request, recommend_similar_by_essentials
 from backend_server.config import Config
 from backend_server.utils import api_requests
+from backend_server.utils import raw_db
 
-NIH_API_URL = "https://api.ods.od.nih.gov/dsld/v9"
+NIH_API_URL = Config.NIH_API_URL
 
 supplements_bp = Blueprint("supplements", __name__)
 
@@ -71,7 +72,8 @@ def lookup():
     try:
         # Query NIH DSLD API by UPC
         print(f"looking for", NIH_API_URL + f"/search-filter?q=%22{barcode}%22")
-        response = api_requests.get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22", timeout=15)
+        response = raw_db.get_label_by_upc(barcode)
+        #get(NIH_API_URL + f"/search-filter?q=%22{barcode}%22", timeout=15)
         response.raise_for_status()
         resp_json = response.json()
         products = resp_json.get("hits", [])
@@ -115,11 +117,6 @@ def lookup():
         print("JSON decode error:", ve)
         return jsonify({"error": "Invalid response from NIH API"}), 500
 
-def dsld_get(path, params=None):
-    r = api_requests.get(f"{NIH_API_URL}{path}", params=params, timeout=15)
-    r.raise_for_status()
-    return r.json()
-
 @supplements_bp.route("/search", methods=["POST"])
 def search():
     data = request.get_json()
@@ -127,7 +124,7 @@ def search():
     if not q:
         return jsonify({"error": "Missing query for /search"}), 400
     method = request.args.get("method", "by_keyword")  # default
-    results = dsld_get("/browse-products/", {"method": method, "q": q})
+    results = api_requests.dsld_get("/browse-products/", {"method": method, "q": q})
     results_new = []
 
     products_already_listed = []
