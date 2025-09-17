@@ -16,7 +16,10 @@ NIH_API_URL = Config.NIH_API_URL
 
 class SpoofedResponse:
     def __init__(self, json):
-        self.json = {"hits":[json]}
+        if json:
+            self.json = {"hits":[json]}
+        else:
+            self.json = {"hits":[]}
     
     def json(self):
         return self.json
@@ -27,7 +30,7 @@ class SpoofedResponse:
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     def get_label_by_upc(upc: str):
-        logging.info("Using spoofed DB for barcode lookup.")
+        logging.info("Using internet for barcode lookup.")
         return api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
 else:    
     conn = psycopg2.connect(DATABASE_URL)
@@ -39,6 +42,7 @@ else:
         """
         # Use a distinct key prefix to avoid collisions with your API cache
         logging.info("Using real DB for barcode lookup.")
+        found_json = None
 
         cache_key = f"label:upc:{upc}"
 
@@ -53,13 +57,13 @@ else:
             cur.execute("SELECT raw_json FROM labels WHERE upc = %s", (upc,))
             row = cur.fetchone()
             if row is None:
-                logging.info(f"[LABELS] UPC {upc} not found")
-                return None
-
-            label_json = row[0]
+                logging.info(f"[LABELS] UPC {upc} not found")            
+            else:
+                label_json = row[0]
 
         # 3️⃣ Cache the result in Redis
-        redis_client.setex(cache_key, CACHE_EXPIRE, json.dumps(label_json))
-        logging.info(f"[LABELS] UPC {upc} fetched from DB and cached")
-
-        return label_json
+        if label_json:
+            redis_client.setex(cache_key, CACHE_EXPIRE, json.dumps(label_json))
+            logging.info(f"[LABELS] UPC {upc} fetched from DB and cached")
+        
+        return SpoofedResponse(label_json)
