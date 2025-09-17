@@ -13,67 +13,64 @@ CACHE_EXPIRE = 30 * 24 * 60 * 60  # 30 days
 redis_client = redis.from_url(REDIS_URL)
 NIH_API_URL = Config.NIH_API_URL
 
-
-def transform_label(record: dict) -> dict:
-    """Transform DSLD-style label JSON into Elasticsearch-style hit format."""
-    
+def transform_record(record):
     if not record:
         return {"hits": []}
 
-    # Flatten ingredients
-    def flatten_ingredients(rows, acc):
-        for row in rows:
-            acc.append({
-                "name": row.get("name"),
-                "notes": row.get("notes", ""),
-                "ingredientGroup": row.get("ingredientGroup"),
-                "category": row.get("category"),
-            })
-            if row.get("nestedRows"):
-                flatten_ingredients(row["nestedRows"], acc)
+    def extract_ingredient(ingr):
+        """Extract a simplified ingredient entry (safe)."""
+        return {
+            "ingredientGroup": ingr.get("ingredientGroup", ""),
+            "notes": ingr.get("notes", ""),
+            "name": ingr.get("name", ""),
+            "category": ingr.get("category", ""),
+        }
+
+    def flatten_ingredients(rows):
+        """Recursively flatten ingredientRows + nestedRows."""
+        result = []
+        for ingr in rows or []:
+            result.append(extract_ingredient(ingr))
+            nested = ingr.get("nestedRows", [])
+            if nested:
+                result.extend(flatten_ingredients(nested))
+        return result
 
     all_ingredients = []
-    flatten_ingredients(record.get("ingredientRows", []), all_ingredients)
-
-    if "otheringredients" in record and record["otheringredients"].get("ingredients"):
-        for row in record["otheringredients"]["ingredients"]:
-            all_ingredients.append({
-                "name": row.get("name"),
-                "notes": "",
-                "ingredientGroup": row.get("ingredientGroup"),
-                "category": row.get("category"),
-            })
-
-    # Build the _source object
-    source = {
-        "brandName": record.get("brandName"),
-        "fullName": record.get("fullName"),
-        "entryDate": record.get("entryDate"),
-        "offMarket": record.get("offMarket", 0),
-        "claims": record.get("claims", []),
-        "events": record.get("events", []),
-        "userGroups": record.get("userGroups", []),
-        "netContents": record.get("netContents", []),
-        "productType": record.get("productType"),
-        "physicalState": record.get("physicalState"),
-        "allIngredients": all_ingredients,
-    }
-
-    # Build the ES hit wrapper
-    hit = {
-        "_index": "dsldnxt_labels_syns1149",
-        "_type": "_doc",
-        "_id": str(record["id"]),
-        "_score": 1.0,  # you can fill with real score later
-        "_source": source,
-    }
+    all_ingredients.extend(flatten_ingredients(record.get("ingredientRows", [])))
+    all_ingredients.extend(
+        [extract_ingredient(ingr) for ingr in record.get("otheringredients", {}).get("ingredients", [])]
+    )
 
     return {
-        "hits": [hit],
-        "stats": {
-            "count": 1,
-            "pct": 4.7e-06,  # placeholder
-        }
+        "hits": [{
+            "_index": "dsldnxt_labels_syns1149",
+            "_type": "_doc",
+            "_id": str(record.get("id", "")),
+            "_score": 19.61498,  # placeholder
+            "_source": {
+                "userGroups": record.get("userGroups", []),
+                "brandName": record.get("brandName", ""),
+                "physicalState": record.get("physicalState", {}),
+                "entryDate": record.get("entryDate", ""),
+                "allIngredients": all_ingredients,
+                "claims": record.get("claims", []),
+                "fullName": record.get("fullName", ""),
+                "offMarket": record.get("offMarket", 0),
+                "netContents": [
+                    {
+                        "unit": nc.get("unit", ""),
+                        "quantity": nc.get("quantity", ""),
+                        "display": nc.get("display", ""),
+                        "order": nc.get("order", 0),
+                    }
+                    for nc in record.get("netContents", [])
+                ],
+                "productType": record.get("productType", {}),
+                "events": record.get("events", []),
+            }
+        }],
+        "stats": {"count": 1, "pct": 4.721836605566101e-06},
     }
 
 
@@ -128,9 +125,12 @@ else:
             redis_client.setex(cache_key, CACHE_EXPIRE, json.dumps(label_json))
             logging.info(f"[LABELS] UPC {upc} fetched from DB and cached")
         
+        label_json = transform_record(label_json)
+
         logging.info(f"JSON 1: {label_json}")
         j2 = api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
         j2 = j2.json()
         logging.info(f"JSON 2: {j2}")
+
         
         return SpoofedResponse(label_json)
