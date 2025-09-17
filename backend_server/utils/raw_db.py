@@ -14,12 +14,72 @@ redis_client = redis.from_url(REDIS_URL)
 NIH_API_URL = Config.NIH_API_URL
 
 
+def transform_label(record: dict) -> dict:
+    """Transform DSLD-style label JSON into Elasticsearch-style hit format."""
+    
+    if not record:
+        return {"hits": []}
+
+    # Flatten ingredients
+    def flatten_ingredients(rows, acc):
+        for row in rows:
+            acc.append({
+                "name": row.get("name"),
+                "notes": row.get("notes", ""),
+                "ingredientGroup": row.get("ingredientGroup"),
+                "category": row.get("category"),
+            })
+            if row.get("nestedRows"):
+                flatten_ingredients(row["nestedRows"], acc)
+
+    all_ingredients = []
+    flatten_ingredients(record.get("ingredientRows", []), all_ingredients)
+
+    if "otheringredients" in record and record["otheringredients"].get("ingredients"):
+        for row in record["otheringredients"]["ingredients"]:
+            all_ingredients.append({
+                "name": row.get("name"),
+                "notes": "",
+                "ingredientGroup": row.get("ingredientGroup"),
+                "category": row.get("category"),
+            })
+
+    # Build the _source object
+    source = {
+        "brandName": record.get("brandName"),
+        "fullName": record.get("fullName"),
+        "entryDate": record.get("entryDate"),
+        "offMarket": record.get("offMarket", 0),
+        "claims": record.get("claims", []),
+        "events": record.get("events", []),
+        "userGroups": record.get("userGroups", []),
+        "netContents": record.get("netContents", []),
+        "productType": record.get("productType"),
+        "physicalState": record.get("physicalState"),
+        "allIngredients": all_ingredients,
+    }
+
+    # Build the ES hit wrapper
+    hit = {
+        "_index": "dsldnxt_labels_syns1149",
+        "_type": "_doc",
+        "_id": str(record["id"]),
+        "_score": 1.0,  # you can fill with real score later
+        "_source": source,
+    }
+
+    return {
+        "hits": [hit],
+        "stats": {
+            "count": 1,
+            "pct": 4.7e-06,  # placeholder
+        }
+    }
+
+
 class SpoofedResponse:
     def __init__(self, json):
-        if json:
-            self.internaljson = {"hits":[json]}
-        else:
-            self.internaljson = {"hits":[]}
+        self.internaljson = json
     
     def json(self):
         return self.internaljson
