@@ -73,7 +73,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
 
   const { showAlert } = useAlert();
 
-  const [positionOfModal, setPositionOfModal] = useState(sharedSheetIndex.value);
+  const [positionOfModal, setPositionOfModal] = useState(0);
 
   useAnimatedReaction(
     () => sharedSheetIndex.value,
@@ -84,6 +84,10 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
       }
     }
   );
+
+  useEffect(() => {
+    setPositionOfModal(sharedSheetIndex.value)
+  })
 
   useEffect(() => {
     console.log('React state index changed:', positionOfModal);
