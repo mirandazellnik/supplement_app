@@ -1,6 +1,6 @@
 import json
-
-from backend_server.services.gpt_service import ask_openrouter
+import logging
+from backend_server.services.llm_client import ask_openrouter
 
 def extract_ingredients(dsld_json):
     """Extracts ingredient names from DSLD ingredientRows + nestedRows."""
@@ -30,17 +30,11 @@ def classify_ingredients_with_gpt(dsld_json):
     essentials, non_essentials = extract_ingredients(dsld_json)
 
     prompt = f"""
-You are given ingredient data for a dietary supplement. 
-Here are the ingredients extracted from the DSLD entry:
-
-Active candidates (possible essentials):
-{json.dumps(essentials, indent=2)}
-
-Other ingredients (likely excipients or fillers):
-{json.dumps(non_essentials, indent=2)}
+You will be given ingredient data for a dietary supplement. 
+The ingredients are extracted from the supplement label
 
 TASK:
-- Classify ONLY the above ingredients into either "essentials" or "non_essentials".
+- Classify ONLY the ingredients given below into either "essentials" or "non_essentials".
 - Essentials = active substances that provide health benefit (nutrients, vitamins, minerals, botanicals, amino acids, standardized compounds).
 - Non_essentials = fillers, binders, preservatives, stabilizers, excipients, and inactive additives.
 - Do NOT invent ingredients. Do NOT add generic nutrition facts (e.g., "Calories", "Protein", "Fat", "Carbohydrates")
@@ -63,7 +57,13 @@ OUTPUT RULES:
   "non_essentials": ["name1", "name2", ...]
 }}
 
-Now classify ONLY the given ingredients.
+Now classify ONLY the following ingredients:
+
+Active candidates (possible essentials):
+{json.dumps(essentials, indent=2)}
+
+Other ingredients (likely excipients or fillers):
+{json.dumps(non_essentials, indent=2)}
 """
 
     gpt_response = ask_openrouter(prompt)
