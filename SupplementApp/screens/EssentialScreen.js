@@ -84,8 +84,8 @@ const EssentialScreen = ({ navigation, essentialName }) => {
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <View style={styles.ratingRow}>
-          <StarRating rating={3} size={18} gap={2} />
-          <Text style={styles.ratingText}>{3}/5</Text>
+          <StarRating rating={0} size={18} gap={2} />
+          <Text style={styles.ratingText}>??/100</Text>
         </View>
       </View>
     </TouchableOpacity>

@@ -255,7 +255,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
           <View style={styles.starsAndButtonRow}>
             <View style={styles.ratingRow}>
               <StarRating rating={product.rating} size={20} gap={2} />
-              <Text style={styles.ratingText}>{product.rating.toFixed(1) == 0 ? "??" : product.rating.toFixed(1)}/5</Text>
+              <Text style={styles.ratingText}>{product.rating.toFixed(1) == 0 ? "??" : product.rating.toFixed(1)*20}/100</Text>
             </View>
             <TouchableOpacity onPress={() => {showAlert("Cannot buy", "Sorry, one-click direct buying is not yet available!", true)}} style={styles.purchaseIconButton}>
               <Ionicons name="cart-outline" size={24} color={colors.primary} />
