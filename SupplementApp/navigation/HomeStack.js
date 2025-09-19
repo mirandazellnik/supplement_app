@@ -32,7 +32,7 @@ function BeyondScanner( { navigation } ) {
         ),
       }}  />
       <Stack.Screen name="EssentialScannerFromProductScanner" >
-        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName}/>}
+        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName} inHome={true}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );
@@ -50,7 +50,7 @@ function JustEssentialScreen( { navigation, essentialName } ) {
         ),
         headerShown: true,
       }}>
-        {props => <EssentialScreen {...props} essentialName={essentialName} />}
+        {props => <EssentialScreen {...props} essentialName={essentialName} inHome={true} inHomeFromModal={true}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );

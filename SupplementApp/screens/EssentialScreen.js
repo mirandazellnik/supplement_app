@@ -19,7 +19,7 @@ import { useAlert } from "../contexts/AlertContext";
 
 const PRODUCT_IMAGE_SIZE = 60;
 
-const EssentialScreen = ({ navigation, essentialName }) => {
+const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal }) => {
     //const { essentialName } = route.params || {};
 
   //const [essentialName, setEssentialName] = useState("Vitamin C");
@@ -79,7 +79,7 @@ const EssentialScreen = ({ navigation, essentialName }) => {
   }, [essentialNameToLookup]);
 
   const renderProduct = ({ item }) => (
-    <TouchableOpacity onPress={() => {item?.id ? navigation.push("Product", {id: item.id, name: item.name, brand: item.brand, inStack: true}) : 1}} style={styles.productBox}>
+    <TouchableOpacity onPress={() => {item?.id ? inHomeFromModal ? navigation.navigate("BeyondScanner", {screen: "ProductScanner", params: {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true}}) : navigation.push(inHome ? "ProductScanner" : "Product", {id: item.id, name: item.name, brand: item.brand, inStack: true}) : 1}} style={styles.productBox}>
       <ProductImageById loading={loadingProducts} productId={item.id} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
