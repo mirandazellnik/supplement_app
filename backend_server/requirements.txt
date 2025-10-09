@@ -16,3 +16,4 @@ psycopg2-binary==2.9.9
 requests_cache==0.9.8
 ratelimit
 tenacity
+bcrypt==4.3.0
