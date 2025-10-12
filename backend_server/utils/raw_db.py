@@ -7,7 +7,7 @@ import logging
 from backend_server.utils import api_requests
 from backend_server.config import Config
 
-from backend_server.utils.db_query import db_execute
+from backend_server.utils.database_tools.db_query import db_execute
 
 # --- Redis setup (reuse same Redis instance) ---
 REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"
