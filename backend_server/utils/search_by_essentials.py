@@ -6,6 +6,9 @@ import logging
 
 from backend_server.utils import api_requests
 from backend_server.config import Config
+from backend_server.utils.database_tools.db_query import db_execute
+from backend_server.utils.database_tools.top_by_essentials import get_top_fast
+from backend_server.utils.database_tools.get_product_json import get_raw_json_by_ids
 
 # --- Redis setup (reuse same Redis instance) ---
 REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"
@@ -13,59 +16,61 @@ CACHE_EXPIRE = 30 * 24 * 60 * 60  # 30 days
 redis_client = redis.from_url(REDIS_URL)
 NIH_API_URL = Config.NIH_API_URL
 
-def transform_record(record):
-    """Transform raw JSON record into standardized result format"""
-    pass
-
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    def get_label_by_upc(upc: str):
-        logging.info("Using internet for search by essentials.")
+    def search_by_essentials(essentials):
+        logging.info("Using internet for search by essentials. COMPLETEME")
         # COMPLETE ME
         #return api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
 else:    
-    conn = psycopg2.connect(DATABASE_URL)
 
-    def get_label_by_upc(upc: str):
+    def search_by_essentials(essentials, n=10):
         """
-        Fetch a label row by UPC, using Redis cache.
+        Fetch a label row by UPC, using Redis cache. [CACHE DISABLED]
         Independent of the existing API caching.
         """
         # Use a distinct key prefix to avoid collisions with your API cache
-        logging.info("Using real DB for barcode lookup.")
-        label_json = None
+        logging.info("Using real DB for essential top product lookup.")
+        #label_json = None
 
-        upc = upc.replace("%20", " ")
+        try:
+            top20 = get_top_fast(essentials, n=2*n)
+            
+            top20_json = get_raw_json_by_ids([pid for pid, _ in top20]) # dict: id->json
 
-        cache_key = f"label:upc:{upc}"
+            top20_scores = {pid: score for pid, score in top20}
 
-        # 1️⃣ Check Redis first
-        cached = redis_client.get(cache_key)
-        if cached:
-            logging.info(f"[LABELS] UPC {upc} fetched from cache")
-            label_json = json.loads(cached)
+            recommendations = []
+            for product_id, product_json in top20_json.items():
+                if not product_json:
+                    continue
+                recommendations.append({
+                    "id": str(product_id),
+                    "name": product_json.get("fullName"),
+                    "brand": product_json.get("brandName"),
+                    "image": product_json.get("thumbnail"),
+                    "score": top20_scores.get(product_id)
+                })
+            
+            results_new = []
 
-        # 2️⃣ Fetch from PostgreSQL if not cached
-        with conn.cursor() as cur:
-            cur.execute("SELECT raw_json FROM labels WHERE upc = %s", (upc,))
-            row = cur.fetchone()
-            if row is None:
-                logging.info(f"[LABELS] UPC {upc} not found")            
-            else:
-                label_json = row[0]
+            products_already_listed = []
 
-        # 3️⃣ Cache the result in Redis
-        if label_json:
-            redis_client.setex(cache_key, CACHE_EXPIRE, json.dumps(label_json))
-            logging.info(f"[LABELS] UPC {upc} fetched from DB and cached")
-        
-        label_json = transform_record(label_json)
+            for hit in recommendations:
+                try:
+                    if hit["name"] + hit["brand"] in products_already_listed:
+                        continue
+                    else:
+                        products_already_listed.append(hit["name"] + hit["brand"])
+                        results_new.append(hit)
+                except:
+                    pass
+            
+            recommendations = results_new
+            recommendations = {"recommendations": recommendations}
+        except Exception as e:
+            logging.error(f"Error during search_by_essentials: {e}")
+            recommendations = {"recommendations": []}
 
-        logging.info(f"JSON 1: {label_json}")
-        j2 = api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
-        j2 = j2.json()
-        logging.info(f"JSON 2: {j2}")
-
-        
-        return SpoofedResponse(label_json)
+        return recommendations

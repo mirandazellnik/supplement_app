@@ -12,6 +12,7 @@ from backend_server.services.gpt_service import fetch_similar_products
 from backend_server.utils import api_requests
 from backend_server.services.rating_calculators import nih_dsld, openfoodfacts, essential_finder
 from backend_server.utils.socket_emit import emit_with_retry
+from backend_server.utils.search_by_essentials import search_by_essentials
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,9 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     
     if recommend_after:
         #recommend_similar_products.delay(str(user_id), str(product_id), payload["name"], payload["brand"])
-        recommend_similar_by_essentials.delay(str(user_id), essential_info["essentials"])
+        #recommend_similar_by_essentials.delay(str(user_id), essential_info["essentials"])
+
+        recommend_similar_by_essentials_ranked.delay(str(user_id), essential_info["essentials"], n=10)
     return None
 
 @celery.task
@@ -135,6 +138,41 @@ def recommend_similar_by_essentials(user_id, essentials):
         
         recommendations = results_new
         recommendations = {"recommendations": recommendations}
+
+    except Exception as e:
+        logger.exception("Failed to recommend similar products by essentials: %s", e)
+        try:
+            socketio.emit("recommend_similar_products_error", {"room": user_id, "data": {"error": str(e)}}, room=user_id)
+        except Exception:
+            logger.exception("Failed to emit recommend_similar_products_error")
+        return None
+
+    # Emit recommendations to the user's room
+    try:
+        logger.info("Emitting recommend_similar_products to room=%s", user_id)
+        socketio.emit("recommend_similar_products", {"room": user_id, "data": recommendations}, room=user_id)
+    except Exception as e:
+        logger.exception("Failed to emit recommend_similar_products: %s", e)
+
+    return None
+
+
+@celery.task
+def recommend_similar_by_essentials_ranked(user_id, essentials, n=10):
+    """
+    USING DATABASE: Recommend similar products based on the given essentials list.
+    Emitted event: 'recommend_similar_products' with payload:
+      {
+        user_id: "...",
+        recommendations: [{id, name, image, ...}, ...]
+      }
+    """
+
+    try:
+        logger.info("DATABASE: Recommending similar products by essentials (emit to room=%s)", user_id)
+        recommendations = search_by_essentials(essentials, n=n)
+        print("RECOMMENDATIONS BELOW")
+        print(recommendations)
 
     except Exception as e:
         logger.exception("Failed to recommend similar products by essentials: %s", e)
