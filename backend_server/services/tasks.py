@@ -1,5 +1,8 @@
 # backend_server/services/tasks.py
-from .celery_worker import celery
+#from .celery_worker import celery
+
+from backend_server.services.make_celery import celery
+
 import requests
 import math
 import logging
