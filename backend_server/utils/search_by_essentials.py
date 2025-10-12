@@ -4,6 +4,8 @@ import psycopg2
 import os
 import logging
 
+from decimal import Decimal
+
 from backend_server.utils import api_requests
 from backend_server.config import Config
 from backend_server.utils.database_tools.db_query import db_execute
@@ -68,6 +70,18 @@ else:
                     pass
             
             recommendations = results_new
+
+            def convert_decimals(obj):
+                if isinstance(obj, list):
+                    return [convert_decimals(i) for i in obj]
+                elif isinstance(obj, dict):
+                    return {k: convert_decimals(v) for k, v in obj.items()}
+                elif isinstance(obj, Decimal):
+                    return float(obj)
+                return obj
+            
+            recommendations = convert_decimals(recommendations)
+
             recommendations = {"recommendations": recommendations}
         except Exception as e:
             logging.error(f"Error during search_by_essentials: {e}")
