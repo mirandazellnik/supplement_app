@@ -1,7 +1,9 @@
+# backend_server/services/celery_worker.py
 import os
 from celery import Celery
+from backend_server.app import create_app  # ✅ import your Flask app factory
 
-REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"  # Provided by Railway
+REDIS_URL = os.getenv("REDIS_URL") or "redis://localhost:6379/0"
 
 celery = Celery(
     "tasks",
@@ -10,6 +12,7 @@ celery = Celery(
 )
 
 def init_celery(flask_app):
+    """Attach Flask app context to Celery tasks."""
     celery.conf.update(flask_app.config)
 
     class ContextTask(celery.Task):
@@ -20,8 +23,9 @@ def init_celery(flask_app):
     celery.Task = ContextTask
     return celery
 
-# Import tasks to register them
-try:
-    import backend_server.services.tasks
-except ImportError:
-    print("Could not import tasks module")
+# --- Initialize Celery with Flask app when worker starts ---
+flask_app = create_app()  # ✅ creates Flask app instance
+init_celery(flask_app)    # ✅ attach app context to Celery
+
+# --- Import tasks AFTER Celery has been initialized ---
+import backend_server.services.tasks
