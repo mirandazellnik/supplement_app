@@ -53,14 +53,15 @@ def top_labels_by_ingredients_fast(ingredient_ids, n=10):
         SELECT c.id, r.overall_score
         FROM candidate_labels c
         JOIN ratings r ON c.id = r.id
-        WHERE c.ingredient_ids @> :ingredient_ids::int[]
+        WHERE c.ingredient_ids @> :ingredient_ids
         ORDER BY r.overall_score DESC
         LIMIT :n
     """, {
         "rarest_id": rarest_id,
-        "ingredient_ids": ingredient_ids,
+        "ingredient_ids": ingredient_ids,  # Python list is fine if db_execute uses psycopg2
         "n": n
     })
+
 
     return results
 
