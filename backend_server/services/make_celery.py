@@ -8,6 +8,9 @@ def make_celery():
         "backend_server",
         broker=redis_url,
         backend=redis_url,
+        include=[
+            "backend_server.services.tasks"  # <-- important
+        ]
     )
     return celery
 
