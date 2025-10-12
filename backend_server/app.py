@@ -13,8 +13,10 @@ from flask_jwt_extended import JWTManager, decode_token
 from backend_server.config import Config
 from backend_server.routes import register_routes
 from backend_server.utils.extensions import db
-from backend_server.services.celery_worker import init_celery
 from backend_server.services.socketio_ref import socketio
+
+from backend_server.services.make_celery import celery  # ✅ only the instance, no import of celery_worker
+from backend_server.services.init_celery import init_celery
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,7 +46,7 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    init_celery(app)
+    init_celery(celery, app)
 
     from backend_server.models.user import User
     with app.app_context():
