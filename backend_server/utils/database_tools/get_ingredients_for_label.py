@@ -23,7 +23,7 @@ def get_ingredients_for_label(label_id):
     # Extract names from rows
     essential_names = [row[0] for row in rows] if rows else []
 
-    non_essential_names = rows2[0] if rows2 else []
+    non_essential_names = rows2[0][0] if rows2 else []
     if isinstance(non_essential_names, str):
         import json
         non_essential_names = json.loads(non_essential_names)
