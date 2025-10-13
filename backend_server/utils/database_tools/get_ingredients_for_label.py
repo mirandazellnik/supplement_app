@@ -28,6 +28,7 @@ def get_ingredients_for_label(label_id):
         import json
         non_essential_names = json.loads(non_essential_names)
 
-    print(essential_names, non_essential_names)
+    print("TEST: >", essential_names, non_essential_names)
+    print(type(essential_names), type(non_essential_names))
 
     return {"essentials": essential_names, "non_essentials": non_essential_names}
