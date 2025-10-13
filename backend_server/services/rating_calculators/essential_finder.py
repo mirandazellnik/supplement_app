@@ -2,6 +2,9 @@ import json
 import logging
 from backend_server.services.llm_client import ask_openrouter
 
+
+## OLD BELOW ->
+
 def extract_ingredients(dsld_json):
     """Extracts ingredient names from DSLD ingredientRows + nestedRows."""
     essentials = []

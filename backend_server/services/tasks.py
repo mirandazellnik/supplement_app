@@ -20,6 +20,8 @@ from backend_server.services.rating_calculators import nih_dsld, openfoodfacts, 
 from backend_server.utils.socket_emit import emit_with_retry
 from backend_server.utils.search_by_essentials import search_by_essentials
 
+from backend_server.utils.database_tools.get_ingredients_for_label import get_ingredients_for_label
+
 logger = logging.getLogger(__name__)
 
 # celery task ---------------------------------------------------------------
@@ -51,7 +53,8 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     # Calculate and send essentials
     essential_info = {}
     try:
-        essential_info = essential_finder.classify_ingredients_with_gpt(label)
+        #essential_info = essential_finder.classify_ingredients_with_gpt(label)
+        essential_info = get_ingredients_for_label(product_id)
         assert essential_info["essentials"] or essential_info["non_essentials"]
         if essential_info["essentials"] == None:
             essential_info["essentials"] = []
