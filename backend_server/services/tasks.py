@@ -75,20 +75,22 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     overall = nih_dsld.compute_overall_rating(categories)
 
     ratings = get_ratings_for_id(product_id)
+    db_categories = ratings.get("categories", []) if ratings else []
+    db_overall = ratings.get("overall_score") if ratings else None
 
-    print("RATINGS BELOW")
-    print(f"RATINGS: {ratings}")
+    #print("RATINGS BELOW")
+    #print(f"RATINGS: {ratings}")
 
-    print("RATINGS END")
+    #print("RATINGS END")
 
-    print("CATEGORIES BELOW")
-    print(f"CATS: {categories}")
-    print("CATEGORIES END")
+    #print("CATEGORIES BELOW")
+    #print(f"CATS: {categories}")
+    #print("CATEGORIES END")
 
     payload = {
         "product_id": str(product_id),
-        "rating": overall,
-        "categories": categories,
+        "rating": db_overall,
+        "categories": db_categories,
         # optionally include a few display-friendly fields from label
         "name": label.get("fullName") or label.get("brandName"),
         "brand": label.get("brandName"),

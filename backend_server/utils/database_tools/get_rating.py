@@ -89,8 +89,8 @@ def _row_to_result(row_dict):
         out["categories"].append({
             "name": cat_name,
             "score": float(score_val) if score_val is not None else None,
-            "label": score_to_label(score_val) if score_val is not None else None,
-            "justification": just_text or ""
+            "rating": score_to_label(score_val) if score_val is not None else None,
+            "detail": just_text or ""
         })
 
     return out
