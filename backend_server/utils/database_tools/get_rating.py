@@ -30,7 +30,7 @@ from sqlalchemy import text
 # Example: if db is defined in backend_server/__init__.py
 #from backend_server import db, create_app
 
-from backend_server.utils.database_tools.db_query import db_execute
+from backend_server.utils.database_tools.db_query import db_execute_mappings
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -120,7 +120,7 @@ def get_ratings_for_id(label_id: str):
     LIMIT 1;
     """
 
-    result = db_execute(sql_query, {"label_id": label_id})
+    result = db_execute_mappings(sql_query, {"label_id": label_id})
     print(f"TYPE: {type(result)}")
     print(result)
     result = result[0] if result else None

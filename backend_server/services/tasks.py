@@ -76,6 +76,15 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
 
     ratings = get_ratings_for_id(product_id)
 
+    print("RATINGS BELOW")
+    print(f"RATINGS: {ratings}")
+
+    print("RATINGS END")
+
+    print("CATEGORIES BELOW")
+    print(f"CATS: {categories}")
+    print("CATEGORIES END")
+
     payload = {
         "product_id": str(product_id),
         "rating": overall,
