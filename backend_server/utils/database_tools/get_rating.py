@@ -120,7 +120,7 @@ def get_ratings_for_id(label_id: str):
     LIMIT 1;
     """
 
-    result = db_execute(text(sql_query), {"label_id": label_id})
+    result = db_execute(sql_query, {"label_id": label_id})
     print(f"TYPE: {type(result)}")
     print(result)
     result = result[0] if result else None
