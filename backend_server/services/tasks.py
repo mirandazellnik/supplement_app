@@ -21,6 +21,7 @@ from backend_server.utils.socket_emit import emit_with_retry
 from backend_server.utils.search_by_essentials import search_by_essentials
 
 from backend_server.utils.database_tools.get_ingredients_for_label import get_ingredients_for_label
+from backend_server.utils.database_tools.get_rating import get_ratings_for_id
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,8 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
     # compute categories / rating
     categories = nih_dsld.compute_category_scores(label)
     overall = nih_dsld.compute_overall_rating(categories)
+
+    ratings = get_ratings_for_id(product_id)
 
     payload = {
         "product_id": str(product_id),
