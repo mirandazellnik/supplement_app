@@ -1,34 +1,40 @@
 # backend_server/utils/top_by_essentials.py (or a similar util module)
 from backend_server.utils.database_tools.db_query import db_execute
+import json
 
 def get_ingredients_for_label(label_id):
     """
-    Fetch all ingredient names for a given label ID.
+    Fetch all ingredient names and human-readable names for a given label ID.
     Return 'essentials' and 'non_essentials' lists.
     """
 
+    # Fetch essentials: name and human_name
     rows = db_execute("""
-        SELECT i.name
+        SELECT i.name, i.human_name
         FROM ingredients i
         JOIN labels l ON i.ingredient_id = ANY(l.ingredient_ids)
         WHERE l.id = :label_id
     """, {"label_id": label_id})
 
+    # Fetch non-essentials (stored as JSON text)
     rows2 = db_execute("""
         SELECT non_essentials_raw
         FROM labels
         WHERE id = :label_id
     """, {"label_id": label_id})
 
-    # Extract names from rows
-    essential_names = [row[0] for row in rows] if rows else []
+    # Parse essential ingredients into list of dicts
+    essentials = [{"name": row[0], "human_name": row[1]} for row in rows] if rows else []
 
-    non_essential_names = rows2[0][0] if rows2 else []
-    if isinstance(non_essential_names, str):
-        import json
-        non_essential_names = json.loads(non_essential_names)
+    # Parse non-essentials
+    non_essentials = rows2[0][0] if rows2 else []
+    if isinstance(non_essentials, str):
+        try:
+            non_essentials = json.loads(non_essentials)
+        except json.JSONDecodeError:
+            non_essentials = []
 
-    print("TEST: >", essential_names, non_essential_names)
-    print(type(essential_names), type(non_essential_names))
+    #print("TEST: >", essentials, non_essentials)
+    #print(type(essentials), type(non_essentials))
 
-    return {"essentials": essential_names, "non_essentials": non_essential_names}
+    return {"essentials": essentials, "non_essentials": non_essentials}
