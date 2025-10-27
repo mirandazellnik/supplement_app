@@ -82,7 +82,7 @@ def get_top_fast(ingredients, n=10):
     Get top N labels matching all (or most) ingredients by name.
     Broadens search automatically if too few matches found.
     """
-    normalized = [normalize_ingredient(i) for i in ingredients]
+    normalized = [i["name"] for i in ingredients]
     ingredient_ids = get_ingredient_ids(normalized)
 
     if len(ingredient_ids) < len(ingredients):
