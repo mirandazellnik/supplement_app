@@ -11,6 +11,8 @@ from backend_server.config import Config
 from backend_server.utils import api_requests
 from backend_server.utils import raw_db
 
+from backend_server.utils.database_tools.get_rating import get_ratings_for_id
+
 NIH_API_URL = Config.NIH_API_URL
 
 supplements_bp = Blueprint("supplements", __name__)
@@ -124,7 +126,7 @@ def search():
     if not q:
         return jsonify({"error": "Missing query for /search"}), 400
     method = request.args.get("method", "by_keyword")  # default
-    results = api_requests.dsld_get("/browse-products/", {"method": method, "q": q})
+    results = api_requests.dsld_get("/browse-products/", {"method": method, "q": q, "size": 50})
     results_new = []
 
     products_already_listed = []
@@ -140,6 +142,17 @@ def search():
             pass
     
     results["hits"] = results_new
+
+    for i, hit in enumerate(results["hits"]):
+        hit_id = str(hit["_id"])
+        hit["overall_score"] = get_ratings_for_id(hit_id)
+        results["hits"][i] = hit
+
+    # sort from highest to lowest
+    results["hits"].sort(key=lambda item: -item["overall_score"])
+
+    results["hits"] = results["hits"][:20]
+
     return jsonify(results)
 
 @supplements_bp.route("/lookupbyid", methods=["POST"])
