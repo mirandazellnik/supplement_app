@@ -145,11 +145,11 @@ def search():
 
     for i, hit in enumerate(results["hits"]):
         hit_id = str(hit["_id"])
-        hit["overall_score"] = get_ratings_for_id(hit_id)
+        hit["ratings"] = get_ratings_for_id(hit_id)
         results["hits"][i] = hit
 
     # sort from highest to lowest
-    results["hits"].sort(key=lambda item: -item["overall_score"])
+    results["hits"].sort(key=lambda item: -item["ratings"]["overall_score"])
 
     results["hits"] = results["hits"][:20]
 
