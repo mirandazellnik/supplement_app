@@ -345,12 +345,13 @@ def get_products_for_essential(user_id, essential_name):
                 pass
         """
 
-        #top_with_essential = search_by_essentials([essential_name], n=10)
+        top_with_essential = search_by_essentials([essential_name], n=10)
+        logger.info(f"printing top {top_with_essential}")
         
-        #roomName = str(user_id) + "-e_" + essential_name
-        #print(roomName + "room name <---------")
+        roomName = str(user_id) + "-e_" + essential_name
+        print(roomName + "room name <---------")
 
-        #socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": top_with_essential}}, room=roomName)
+        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": top_with_essential}}, room=roomName)
     except Exception as e:
         logger.exception("Failed to fetch products for essential %s: %s", essential_name, e)
         socketio.emit("e_essential_products_error", {"room": roomName, "data": {"essential": essential_name, "error": str(e)}}, room=roomName)
