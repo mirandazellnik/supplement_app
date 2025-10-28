@@ -47,6 +47,14 @@ else:
             for product_id, product_json in top20_json.items():
                 if not product_json:
                     continue
+
+                if isinstance(product_json, str):
+                    try:
+                        product_json = json.loads(product_json)
+                    except Exception as e:
+                        logging.warning(f"Invalid JSON for id {product_id}: {e}")
+                        continue
+
                 recommendations.append({
                     "id": str(product_id),
                     "name": product_json.get("fullName"),
