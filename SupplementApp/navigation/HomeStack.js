@@ -39,7 +39,7 @@ function BeyondScanner( { navigation } ) {
   );
 }
 
-function JustEssentialScreen( { navigation, essentialName } ) {
+function JustEssentialScreen( { navigation, essentialName, essentialHumanName } ) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="EssentialScanner" options={{

@@ -251,7 +251,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
 
   return (
     <BottomSheetScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop:0 }} nestedScrollEnabled>
-      {positionOfModal == 0 && !beenUp ? <Text style={[styles.essentialText, {alignSelf:"center", color:"#777777" }]}>Swipe up to see more</Text> : null}
+      {positionOfModal == 0 && !beenUp ? <Text style={[styles.essentialText, {alignSelf:"center", color:"#777777" }]}>{!notFound ? "Swipe up to see more" : "Swipe down to try again"}</Text> : null}
       {/* Top section */}
       <View style={[styles.topRow, {paddingTop: spacing.lg}]}>
         <ProductImageById loading={loadingProduct && !notFound} productId={product.id} style={styles.productImage} />
@@ -287,7 +287,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem} onPress={() => { navigation.navigate("JustEssentialScreen", { essentialName: item.name }) }}>
+          <TouchableOpacity style={styles.essentialItem} onPress={() => { navigation.navigate("JustEssentialScreen", { essentialName: item.name, essentialHumanName: item.human_name }) }}>
             <Text style={styles.essentialText}>{item.human_name}</Text>
           </TouchableOpacity>
         )}
