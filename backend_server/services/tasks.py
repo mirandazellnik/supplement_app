@@ -22,6 +22,7 @@ from backend_server.utils.search_by_essentials import search_by_essentials
 
 from backend_server.utils.database_tools.get_ingredients_for_label import get_ingredients_for_label
 from backend_server.utils.database_tools.get_rating import get_ratings_for_id
+from backend_server.utils.database_tools.top_by_essentials import get_top_fast
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +313,8 @@ def get_products_for_essential(user_id, essential_name):
     """
     try:
         logger.info("Fetching products for essential=%s (emit to room=%s)", essential_name, user_id)
+        
+        """
         r = api_requests.get(f"https://api.ods.od.nih.gov/dsld/v9/search-filter/?q=%22{essential_name}%22", timeout=15)
         r.raise_for_status()
         resp_json = r.json()
@@ -340,11 +343,14 @@ def get_products_for_essential(user_id, essential_name):
                     results_new.append(hit)
             except:
                 pass
+        """
+
+        top_with_essential = search_by_essentials([essential_name], n=10)
         
         roomName = str(user_id) + "-e_" + essential_name
         print(roomName + "room name <---------")
 
-        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": results_new}}, room=roomName)
+        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": top_with_essential}}, room=roomName)
     except Exception as e:
         logger.exception("Failed to fetch products for essential %s: %s", essential_name, e)
         socketio.emit("e_essential_products_error", {"room": roomName, "data": {"essential": essential_name, "error": str(e)}}, room=roomName)
