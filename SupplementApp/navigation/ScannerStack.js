@@ -13,7 +13,7 @@ export default function ScannerStack() {
       <Stack.Screen name="Barcode Scanner" component={QRScanner} />
       <Stack.Screen name="Product" component={ProductScreen} />
       <Stack.Screen name="Essential">
-        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName} navigation={props.route.params?.navigation}/>}
+        {props => <EssentialScreen {...props} essentialHumanName={props.route.params?.essentialHumanName} essentialName={props.route.params?.essentialName} navigation={props.route.params?.navigation}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );

@@ -14,7 +14,7 @@ export default function SearchProductsStack() {
       <Stack.Screen name="Search Products" component={SearchScreen} />
       <Stack.Screen name="Product" component={ProductScreen}/>
       <Stack.Screen name="Essential">
-        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName}/>}
+        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName} essentialHumanName={props.route.params?.essentialHumanName}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );

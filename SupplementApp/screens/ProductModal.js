@@ -25,6 +25,8 @@ import ProductImageById from "../components/ProductImageById";
 import { useAlert } from "../contexts/AlertContext";
 import { useAnimatedReaction, runOnJS } from "react-native-reanimated";
 
+import RatingBar from "../components/RatingBar";
+
 const ESSENTIALS_PLACEHOLDER = [
   { id: "1", name: "Vitamin C" },
   { id: "2", name: "Zinc" },
@@ -59,6 +61,8 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(true);
   const [loadingEssentials, setLoadingEssentials] = useState(true);
+
+  const [overallRating, setOverallRating] = useState(null);
 
   const [similarProducts, setSimilarProducts] = useState([]);
   
@@ -103,6 +107,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
         }
         if (data?.rating) {
           setProduct((prev) => prev ? { ...prev, rating: data.rating } : prev);
+          setOverallRating((data.rating * 10).toFixed(0))
         }
 
         setLoadingCategories(false);
@@ -153,6 +158,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
     setCategories([]);
     setSimilarProducts([]);
     setEssentials([]);
+    setOverallRating(null);
 
     setLoadingProduct(true);
     setLoadingCategories(true);
@@ -254,13 +260,13 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
           <Text style={styles.brandName} numberOfLines={1} adjustsFontSizeToFit>{product.brand}</Text>
           <View style={styles.starsAndButtonRow}>
             <View style={styles.ratingRow}>
-              <StarRating rating={product.rating} size={20} gap={2} />
-              <Text style={styles.ratingText}>{product.rating.toFixed(1) == 0 ? "??" : product.rating.toFixed(1)*20}/100</Text>
+              <RatingBar rating={overallRating/20} width={100} gap={2} />
+              <Text style={styles.ratingText}>{overallRating == 0 ? "??" : overallRating}/100</Text>
             </View>
-            <TouchableOpacity onPress={() => {showAlert("Cannot buy", "Sorry, one-click direct buying is not yet available!", true)}} style={styles.purchaseIconButton}>
+            {/*<TouchableOpacity onPress={() => {showAlert("Cannot buy", "Sorry, one-click direct buying is not yet available!", true)}} style={styles.purchaseIconButton}>
               <Ionicons name="cart-outline" size={24} color={colors.primary} />
               <Text style={styles.buyText}>BUY</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>*/}
           </View>
         </View>
       </View>
@@ -282,7 +288,7 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.essentialItem} onPress={() => { navigation.navigate("JustEssentialScreen", { essentialName: item.name }) }}>
-            <Text style={styles.essentialText}>{item.name}</Text>
+            <Text style={styles.essentialText}>{item.human_name}</Text>
           </TouchableOpacity>
         )}
       />)
@@ -351,14 +357,29 @@ const ProductScreen = ({ upc, sheetRef, navigation, openDeeperProduct, sharedShe
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingVertical: spacing.sm }}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.similarItem} onPress={() => {openDeeperProduct("ProductScanner", {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true})}}>
+              <TouchableOpacity
+                style={styles.similarItem}
+                onPress={() =>
+                  {openDeeperProduct("ProductScanner", {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true})}
+                }
+              >
                 <ProductImageById loading={loadingProduct && !notFound} productId={item.id} style={styles.similarImage} />
-                <Text style={styles.similarName} numberOfLines={2}>
-                  {item.name}
-                </Text>
-                <Text style={styles.similarManufacturer} numberOfLines={1}>
-                  {item.brand}
-                </Text>
+                <View style={styles.similarTextContainer}>
+                  <Text style={styles.similarName} numberOfLines={2} ellipsizeMode="tail">
+                    {item.name}
+                  </Text>
+
+                  <Text style={styles.similarManufacturer} numberOfLines={1}>
+                    {item.brand}
+                  </Text>
+
+                  <View style={styles.ratingRowTiny}>
+                    <RatingBar rating={item.score / 2} width={50} height={12} />
+                    <Text style={styles.ratingTextTiny}>
+                      {(item.score * 10).toFixed(0)}/100
+                    </Text>
+                  </View>
+                </View>
               </TouchableOpacity>
             )}
           />
@@ -374,13 +395,13 @@ const styles = StyleSheet.create({
   productImage: { width: 80, height: 80, borderRadius: 8, marginRight: spacing.md, backgroundColor: colors.surface },
   titleStarsContainer: { flex: 1, flexDirection: "column", justifyContent: "center" },
   productName: { ...typography.h2, color: colors.textPrimary, fontWeight: "bold", flexShrink: 1, marginBottom: 2 },
-  starsAndButtonRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
-  ratingRow: { flexDirection: "row", alignItems: "center" },
+  starsAndButtonRow: { flexDirection: "row", alignItems: "center", marginTop: 10 },
+  ratingRow: { flexDirection: "row", alignItems: "center", alignSelf:"flex-end" },
   ratingText: { marginLeft: 8, color: colors.textSecondary, fontSize: 16, fontWeight: "500" },
   purchaseIconButton: { flexDirection: "row", alignItems: "center", marginLeft: 18, backgroundColor: "#fff", borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, elevation: 2 },
   buyText: { color: colors.primary, fontWeight: "bold", fontSize: 16, marginLeft: 6 },
   sectionTitle: { ...typography.h3, color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.sm, fontWeight: "bold" },
-  essentialItem: { backgroundColor: colors.background, borderRadius: 16, width: 110, height: 54, justifyContent: "center", alignItems: "center", marginRight: spacing.md, marginVertical: spacing.xs, elevation: 1 },
+  essentialItem: { backgroundColor: colors.background, borderRadius: 16, width: 110, minHeight: 50, justifyContent: "center", alignItems: "center", marginRight: spacing.md, marginVertical: spacing.xs, elevation: 1 },
   essentialText: { color: colors.textPrimary, fontWeight: "700", fontSize: 16, textAlign: "center" },
   categoryContainer: { backgroundColor: colors.background, borderRadius: 12, marginBottom: spacing.sm, overflow: "hidden", elevation: 1 },
   categoryHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md },
@@ -397,11 +418,48 @@ const styles = StyleSheet.create({
   },
 
   // Similar products styles
-  similarItem: { backgroundColor: colors.background, borderRadius: 16, width: 150, padding: spacing.sm, marginRight: spacing.md, alignItems: "center", elevation: 2 },
-  similarImage: { width: 100, height: 100, borderRadius: 8, marginBottom: spacing.sm, backgroundColor: colors.surface },
-  similarName: { color: colors.textPrimary, fontWeight: "600", fontSize: 14, textAlign: "center" },
-  similarManufacturer: { color: colors.textSecondary, fontSize: 12, marginTop: 2, textAlign: "center" },
-  
+  similarItem: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    width: 150,
+    padding: spacing.sm,
+    marginRight: spacing.md,
+    alignItems: "center",
+    elevation: 2,
+  },
+
+  similarTextContainer: {
+    flex: 1,                     // fill remaining space below image
+    justifyContent: "space-between", // push rating bar to bottom, name at top
+    width: "100%",
+    paddingVertical: 2,          // optional small padding
+  },
+
+  similarName: {
+    color: colors.textPrimary,
+    fontWeight: "600",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 18,             // make it easier to align fractions of a line
+  },
+
+  similarManufacturer: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    textAlign: "center",
+  },
+
+  ratingRowTiny: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ratingTextTiny: {
+    marginLeft: 8,
+    color: colors.textSecondary,
+    fontSize: 15,
+    fontWeight: "500",
+  },  
 });
 
 export default ProductScreen;

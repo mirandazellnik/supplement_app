@@ -33,7 +33,7 @@ function BeyondScanner( { navigation } ) {
         title: "Product"
       }}  />
       <Stack.Screen name="EssentialScannerFromProductScanner" options={{title: "Product"}}>
-        {props => <EssentialScreen {...props} essentialName={props.route.params?.essentialName} inHome={true}/>}
+        {props => <EssentialScreen {...props} essentialHumanName={props.route.params?.essentialHumanName} essentialName={props.route.params?.essentialName} inHome={true}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );
@@ -52,7 +52,7 @@ function JustEssentialScreen( { navigation, essentialName } ) {
         title: "Essential",
         headerShown: true,
       }}>
-        {props => <EssentialScreen {...props} essentialName={essentialName} inHome={true} inHomeFromModal={true}/>}
+        {props => <EssentialScreen {...props} essentialHumanName={essentialHumanName} essentialName={essentialName} inHome={true} inHomeFromModal={true}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );
@@ -71,7 +71,7 @@ export default function HomeStack( { navigation } ) {
       <Tab.Screen name="HomeAndScanner" options={{ headerShown: false, tabBarStyle: { display: "none" } }} component={HomeAndScanner} />
       <Tab.Screen name="BeyondScanner" options={{ headerShown: false, tabBarStyle: { display: "none" } }} component={BeyondScanner} />
       <Tab.Screen name="JustEssentialScreen">
-        {props => <JustEssentialScreen {...props} essentialName={props.route.params?.essentialName} />}
+        {props => <JustEssentialScreen {...props} essentialName={props.route.params?.essentialName} essentialHumanName={props.route.params?.essentialHumanName}/>}
       </Tab.Screen>
     </Tab.Navigator>
   );

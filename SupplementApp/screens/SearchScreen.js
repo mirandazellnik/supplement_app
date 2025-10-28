@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, } from "react";
 import {
   View,
   TextInput,
@@ -7,11 +7,14 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  Platform
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { search } from "../api/supplements"
 import { useAlert } from "../contexts/AlertContext";
 import { StatusBar } from "expo-status-bar";
+import RatingBar from "../components/RatingBar";
+import ProductImageById from "../components/ProductImageById";
 
 export default function SearchScreen( {navigation} ) {
   const [query, setQuery] = useState("");
@@ -33,7 +36,7 @@ export default function SearchScreen( {navigation} ) {
         showAlert("No products found.");
       }
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       showAlert("Error searching products.");
     } finally {
       setLoading(false);
@@ -71,9 +74,46 @@ export default function SearchScreen( {navigation} ) {
           (item.dsldId ? String(item.dsldId) : index.toString())
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.resultCard} onPress={() => {navigation.push("Product", {id: item._id, name: item._source.fullName, brand: item._source.brandName, inStack: false})}}>
-            <Text style={styles.resultName}>{item._source.fullName}</Text>
-            <Text style={styles.resultBrand}>{item._source.brandName}</Text>
+          <TouchableOpacity
+            style={styles.resultCard}
+            onPress={() => {
+              navigation.push("Product", {
+                id: item._id,
+                name: item._source.fullName,
+                brand: item._source.brandName,
+                inStack: false,
+              });
+            }}
+          >
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <ProductImageById
+                loading={false}
+                productId={item._id}
+                style={styles.similarImage}
+              />
+
+              {/* text column */}
+              <View style={styles.textColumn}>
+                <View>
+                  <Text style={styles.resultName} numberOfLines={1}>
+                    {item._source.fullName}
+                  </Text>
+                  <Text style={styles.resultBrand} numberOfLines={1}>
+                    {item._source.brandName}
+                  </Text>
+                </View>
+
+                {/* bottom-aligned rating */}
+                <View style={styles.ratingRow}>
+                  <RatingBar
+                    rating={Math.round(item.ratings.overall_score*10) / 20}
+                    height={20}
+                    width={90}
+                  />
+                  <Text style={styles.resultBrand}>{Math.round(item.ratings.overall_score*10)}</Text>
+                </View>
+              </View>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -123,12 +163,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#eee",
   },
-  resultName: { fontSize: 16, fontWeight: "600", color: "#222" },
-  resultBrand: { fontSize: 14, color: "#555", marginTop: 4 },
+  resultName: { fontSize: 16, fontWeight: "600", color: "#222", flexShrink: 1},
+  resultBrand: { fontSize: 14, color: "#555", marginTop: 4, flexShrink: 1},
   emptyText: {
     textAlign: "center",
     color: "#666",
     marginTop: 20,
     fontSize: 16,
+  },
+  textColumn: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between", // pushes ratingRow to bottom
+    flexShrink: 1,
+  },
+
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
   },
 });

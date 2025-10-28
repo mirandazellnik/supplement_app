@@ -36,64 +36,63 @@ else:
         logging.info("Using real DB for essential top product lookup.")
         #label_json = None
 
-        #try:
-        top20 = get_top_fast(essentials, n=2*n)
-        
-        top20_json = get_raw_json_by_ids([pid for pid, _ in top20]) # dict: id->json
-        logging.info(f"JSON:::::: {top20_json}")
+        try:
+            top20 = get_top_fast(essentials, n=2*n)
+            
+            top20_json = get_raw_json_by_ids([pid for pid, _ in top20]) # dict: id->json
 
-        top20_scores = {pid: score for pid, score in top20}
+            top20_scores = {pid: score for pid, score in top20}
 
-        recommendations = []
-        for product_id, product_json in top20_json.items():
-            if not product_json:
-                continue
+            recommendations = []
+            for product_id, product_json in top20_json.items():
+                if not product_json:
+                    continue
 
-            if isinstance(product_json, str):
+                if isinstance(product_json, str):
+                    try:
+                        product_json = json.loads(product_json)
+                    except Exception as e:
+                        logging.warning(f"Invalid JSON for id {product_id}: {e}")
+                        continue
+
+                recommendations.append({
+                    "id": str(product_id),
+                    "name": product_json.get("fullName"),
+                    "brand": product_json.get("brandName"),
+                    "image": product_json.get("thumbnail"),
+                    "score": top20_scores.get(product_id)
+                })
+            
+            results_new = []
+
+            products_already_listed = []
+
+            for hit in recommendations:
                 try:
-                    product_json = json.loads(product_json)
-                except Exception as e:
-                    logging.warning(f"Invalid JSON for id {product_id}: {e}")
-                    continue
+                    if hit["name"] + hit["brand"] in products_already_listed:
+                        continue
+                    else:
+                        products_already_listed.append(hit["name"] + hit["brand"])
+                        results_new.append(hit)
+                except:
+                    pass
+            
+            recommendations = results_new
 
-            recommendations.append({
-                "id": str(product_id),
-                "name": product_json.get("fullName"),
-                "brand": product_json.get("brandName"),
-                "image": product_json.get("thumbnail"),
-                "score": top20_scores.get(product_id)
-            })
-        
-        results_new = []
+            def convert_decimals(obj):
+                if isinstance(obj, list):
+                    return [convert_decimals(i) for i in obj]
+                elif isinstance(obj, dict):
+                    return {k: convert_decimals(v) for k, v in obj.items()}
+                elif isinstance(obj, Decimal):
+                    return float(obj)
+                return obj
+            
+            recommendations = convert_decimals(recommendations)
 
-        products_already_listed = []
-
-        for hit in recommendations:
-            try:
-                if hit["name"] + hit["brand"] in products_already_listed:
-                    continue
-                else:
-                    products_already_listed.append(hit["name"] + hit["brand"])
-                    results_new.append(hit)
-            except:
-                pass
-        
-        recommendations = results_new
-
-        def convert_decimals(obj):
-            if isinstance(obj, list):
-                return [convert_decimals(i) for i in obj]
-            elif isinstance(obj, dict):
-                return {k: convert_decimals(v) for k, v in obj.items()}
-            elif isinstance(obj, Decimal):
-                return float(obj)
-            return obj
-        
-        recommendations = convert_decimals(recommendations)
-
-        recommendations = {"recommendations": recommendations}
-        #except Exception as e:
-        #    logging.error(f"Error during search_by_essentials: {e}")
-        #    recommendations = {"recommendations": []}
+            recommendations = {"recommendations": recommendations}
+        except Exception as e:
+            logging.error(f"Error during search_by_essentials: {e}")
+            recommendations = {"recommendations": []}
 
         return recommendations

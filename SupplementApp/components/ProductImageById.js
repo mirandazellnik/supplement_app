@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { View, Image, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
+import { Image } from "expo-image"
 import { spacing } from "../styles/spacing";
 import { colors } from "../styles/colors";
 import CrossPlatformSpinner from "./CrossPlatformSpinner";

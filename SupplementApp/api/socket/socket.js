@@ -26,9 +26,15 @@ function setupSocket(socket) {
   socket.on("essentials", ({ room, data }) => {
     const id = room.split("-").pop();
     if (callbacks[id]) {
-      const essentials = data.essentials.map((name, index) => ({
+      /*const essentials = data.essentials.map((name, index) => ({
         id: (index + 1).toString(),
         name,
+      }));*/
+      
+      const essentials = data.essentials.map(({ name, human_name }, index) => ({
+        id: (index + 1).toString(),
+        name,
+        human_name,
       }));
       console.log("📦 Essentials transformed:", essentials);
       callbacks[id]["onEssentials"](essentials);

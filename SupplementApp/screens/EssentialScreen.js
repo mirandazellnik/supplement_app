@@ -17,9 +17,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useAlert } from "../contexts/AlertContext";
 
+import RatingBar from "../components/RatingBar";
+
 const PRODUCT_IMAGE_SIZE = 60;
 
-const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal }) => {
+const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal, essentialHumanName }) => {
     //const { essentialName } = route.params || {};
 
   //const [essentialName, setEssentialName] = useState("Vitamin C");
@@ -84,8 +86,8 @@ const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal })
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <View style={styles.ratingRow}>
-          <StarRating rating={0} size={18} gap={2} />
-          <Text style={styles.ratingText}>??/100</Text>
+          <RatingBar rating={Math.round(item?.score*10)/20} />
+          <Text style={styles.ratingText}>{Math.round(item?.score*10)}/100</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -93,7 +95,7 @@ const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal })
 
   return (
     <SafeAreaView edges={['left', 'right']} style={{ flex:1, paddingBottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.lg}}>
-          <Text style={styles.essentialName}>{essentialName}</Text>
+          <Text style={styles.essentialName}>{essentialHumanName}</Text>
           {loadingDesc ? (
                   <View style={{ alignItems: "center", marginVertical: spacing.md }}>
                     <ActivityIndicator size="small" color={colors.primary} />
@@ -101,7 +103,7 @@ const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal })
                   </View>
                 ) : (
           <Text style={styles.essentialDescription}>{essentialDesc}</Text>)}
-          <Text style={styles.sectionTitle}>Products with {essentialName}</Text>
+          <Text style={styles.sectionTitle}>Products with {essentialHumanName}</Text>
     { loadingProducts ? (
                   <View style={{ alignItems: "center", marginVertical: spacing.md }}>
                     <ActivityIndicator size="small" color={colors.primary} />

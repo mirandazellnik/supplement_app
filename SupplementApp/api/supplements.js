@@ -40,6 +40,7 @@ export async function search(query) {
     );
 
     // Immediate partial response (fast)
+    console.log(res.data.hits);
     return res.data.hits; 
   } catch (e) {
     throw e.response?.data?.msg || "Lookup failed";
