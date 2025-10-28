@@ -40,6 +40,7 @@ else:
             top20 = get_top_fast(essentials, n=2*n)
             
             top20_json = get_raw_json_by_ids([pid for pid, _ in top20]) # dict: id->json
+            logging.info(f"JSON:::::: {top20_json}")
 
             top20_scores = {pid: score for pid, score in top20}
 
