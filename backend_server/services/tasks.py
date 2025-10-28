@@ -346,6 +346,7 @@ def get_products_for_essential(user_id, essential_name):
         """
 
         top_with_essential = search_by_essentials([{"name": essential_name}], n=10)
+        top_with_essential = top_with_essential["recommendations"]
         logger.info(f"printing top {top_with_essential}")
         
         roomName = str(user_id) + "-e_" + essential_name
