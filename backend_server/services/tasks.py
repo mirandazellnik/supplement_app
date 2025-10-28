@@ -22,7 +22,7 @@ from backend_server.utils.search_by_essentials import search_by_essentials
 
 from backend_server.utils.database_tools.get_ingredients_for_label import get_ingredients_for_label
 from backend_server.utils.database_tools.get_rating import get_ratings_for_id
-#from backend_server.utils.database_tools.top_by_essentials import get_top_fast
+from backend_server.utils.database_tools.top_by_essentials import get_top_fast
 
 logger = logging.getLogger(__name__)
 
