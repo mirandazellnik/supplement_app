@@ -17,7 +17,7 @@ def search_essentials(query, limit=10, min_similarity=0.3):
             similarity(name, :norm_query),
             similarity(human_name, :query)
         ) AS sim_score
-        FROM essential
+        FROM ingredients
         WHERE similarity(name, :norm_query) > :min_similarity
            OR similarity(human_name, :query) > :min_similarity
         ORDER BY sim_score DESC
