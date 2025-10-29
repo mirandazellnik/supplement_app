@@ -9,6 +9,7 @@ from backend_server.utils.barcodes import format_barcode
 from backend_server.services.tasks import get_products_for_essential
 from backend_server.config import Config
 from backend_server.utils import api_requests
+from backend_server.utils.database_tools.search_for_essential import search_essentials
 
 essentials_bp = Blueprint("essentials", __name__)
 
@@ -33,3 +34,16 @@ Give me a short, roughly 3-sentence blurb about {essential_name}, as it is used 
     get_products_for_essential.delay(user_id, essential_name)
 
     return response
+
+@essentials_bp.route("/search", methods=["POST"])
+@jwt_required()
+def lookup():
+    data = request.get_json()
+    q = data.get("q")
+    if not q:
+        return jsonify({"error": "Missing query"}), 400
+    
+    results = search_essentials(q)
+    print(results)
+
+    return {"results": results}
