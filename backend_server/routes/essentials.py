@@ -10,6 +10,7 @@ from backend_server.services.tasks import get_products_for_essential
 from backend_server.config import Config
 from backend_server.utils import api_requests
 from backend_server.utils.database_tools.search_for_essential import search_essentials
+from backend_server.services.essential_description import get_essential_description
 
 essentials_bp = Blueprint("essentials", __name__)
 
@@ -23,10 +24,9 @@ def lookup():
     
     user_id = get_jwt_identity()  # current user
     print(f"ess name {essential_name}")
+    
     try:
-        response = ask_openrouter(f"""
-Give me a short, roughly 3-sentence blurb about {essential_name}, as it is used in supplements. Describe its common function in supplements (for humans), the common positive effects it has on humans, and any common potential risks that can occur from taking supplements which contain it. Your response should not contain any markdown formatting, newline characters, tab characters, or other attempts at formatting.
-""")
+        response = get_essential_description(essential_name)
     except Exception as e:
         print("Error with essential lookup", e)
         return jsonify({"error": str(e)}), 500
