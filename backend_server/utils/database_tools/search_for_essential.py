@@ -1,4 +1,4 @@
-from backend_server.utils.database_tools.db_query import db_execute
+from backend_server.utils.database_tools.db_query import db_execute, db_execute_no_result
 from backend_server.utils.database_tools.normalize_ingredient import normalize_ingredient
 
 def search_essentials(query, limit=10, min_similarity=0.3):
@@ -11,6 +11,9 @@ def search_essentials(query, limit=10, min_similarity=0.3):
         return []
 
     norm_query = normalize_ingredient(query)
+
+    new = db_execute_no_result("""CREATE EXTENSION IF NOT EXISTS pg_trgm;""")
+    print("created new thing")
 
     rows = db_execute("""
         SELECT name, human_name, GREATEST(
