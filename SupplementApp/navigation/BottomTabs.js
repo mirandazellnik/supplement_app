@@ -6,6 +6,8 @@ import ProfileScreen from "../screens/ProfileScreen";
 import SearchProductsStack from "../navigation/SearchProductsStack"
 import HomeStack from "./HomeStack";
 import PersonalRecommendations from "../screens/PersonalRecommendations";
+import TopProductsScreen from "../screens/TopProductsScreen";
+import TopStack from "./TopStack";
 
 const Tab = createBottomTabNavigator();
 //options={{ headerShown: false }}
@@ -29,6 +31,9 @@ export default function BottomTabs() {
         case "Search":
           iconName = focused ? "search" : "search-outline";
           break;
+        case "Top":
+          iconName = focused ? "podium" : "podium-outline";
+          break;
       }
 
       return <Ionicons name={iconName} size={size} color={color} />;
@@ -49,7 +54,8 @@ export default function BottomTabs() {
 
       {/*<Tab.Screen name="Scanner" options={{ headerShown: false }} component={ScannerStack}/>*/}
       <Tab.Screen name="Search" options={{headerShown: false}} component={SearchProductsStack}/>
-      <Tab.Screen name="Profile" options={{ headerShown: true }}>
+      <Tab.Screen name="Top" options={{headerShown: false}} component={TopStack} />
+      <Tab.Screen name="Profile" options={{ headerShown: true, title: "Account" }}>
         {props => <ProfileScreen {...props}/>}
       </Tab.Screen>
       {/*<Tab.Screen name="Personal Recommendations" options={{ headerShown: true }} component={PersonalRecommendations}/>*/}

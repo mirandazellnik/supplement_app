@@ -32,7 +32,7 @@ function BeyondScanner( { navigation } ) {
         ),
         title: "Product"
       }}  />
-      <Stack.Screen name="EssentialScannerFromProductScanner" options={{title: "Product"}}>
+      <Stack.Screen name="EssentialScannerFromProductScanner" options={{title: "Essential Ingredient"}}>
         {props => <EssentialScreen {...props} essentialHumanName={props.route.params?.essentialHumanName} essentialName={props.route.params?.essentialName} inHome={true}/>}
       </Stack.Screen>
     </Stack.Navigator>
@@ -49,7 +49,7 @@ function JustEssentialScreen( { navigation, essentialName, essentialHumanName } 
             onPress={() => navigation.goBack()}
           />
         ),
-        title: "Essential",
+        title: "Essential Ingredient",
         headerShown: true,
       }}>
         {props => <EssentialScreen {...props} essentialHumanName={essentialHumanName} essentialName={essentialName} inHome={true} inHomeFromModal={true}/>}

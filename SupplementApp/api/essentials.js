@@ -26,3 +26,23 @@ export async function getEssential(essentialName) {
     throw e.response?.data?.msg || "Essntialinfo failed";
   }
 }
+
+export async function searchEssentialName(q) {
+  const token = await getToken();
+  try {
+    const res = await axios.post(
+      `${API_URL}/search`,
+      { q: q },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Immediate partial response (fast)
+    return res.data; 
+  } catch (e) {
+    throw e.response?.data?.msg || "Essntialinfo failed";
+  }
+}

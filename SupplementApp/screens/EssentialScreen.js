@@ -103,7 +103,7 @@ const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal, e
                   </View>
                 ) : (
           <Text style={styles.essentialDescription}>{essentialDesc}</Text>)}
-          <Text style={styles.sectionTitle}>Products with {essentialHumanName}</Text>
+          <Text style={styles.sectionTitle}>Top Products with {essentialHumanName}</Text>
     { loadingProducts ? (
                   <View style={{ alignItems: "center", marginVertical: spacing.md }}>
                     <ActivityIndicator size="small" color={colors.primary} />

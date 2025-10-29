@@ -280,7 +280,7 @@ const ProductScreen = ({ route, navigation }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingVertical: spacing.sm }}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.essentialItem} onPress={() => { if (fromHome) { navigation.push("EssentialScannerFromProductScanner", { essentialName: item.name, essentialHumanName: item.human_name }) } else { navigation.navigate("Essential", { essentialName: item.name, essentialHumanName: item.human_name }) } }}>
+          <TouchableOpacity style={styles.essentialItem} onPress={() => { if (fromHome) { navigation.push("EssentialScannerFromProductScanner", { essentialName: item.name, essentialHumanName: item.human_name, navigation: navigation }) } else { navigation.navigate("Essential", { essentialName: item.name, essentialHumanName: item.human_name, navigation: navigation }) } }}>
             <Text style={styles.essentialText}>{item.human_name}</Text>
           </TouchableOpacity>
         )}

@@ -48,7 +48,7 @@ export default function SearchScreen( {navigation} ) {
       <StatusBar style="dark" backgroundColor="#f9fafc" />
       <TextInput
         style={styles.input}
-        placeholder="Enter product name, brand, or ingredient"
+        placeholder="Enter product or brand name"
         placeholderTextColor="#999"
         value={query}
         onChangeText={setQuery}
@@ -121,14 +121,14 @@ export default function SearchScreen( {navigation} ) {
             <Text style={styles.emptyText}>No results yet.</Text>
           ) : null
         }
-        contentContainerStyle={{ paddingBottom: 30 }}
+        contentContainerStyle={{ paddingBottom: 10 }}
       />
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20, paddingBottom:0 },
   title: {
     fontSize: 24,
     fontWeight: "700",

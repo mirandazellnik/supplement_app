@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.bigTitle} numberOfLines={1} adjustsFontSizeToFit>
             Welcome to BlueZone
           </Text>
-          <Text style={styles.subtitle}>Click "Scan" to get started!</Text>
+          <Text style={styles.subtitle}>Click the "Scan" button in the bottom right corner to get started!</Text>
         </View>
 
         {/* Two Squares */}
