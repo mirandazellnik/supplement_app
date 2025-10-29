@@ -26,6 +26,6 @@ def get_essential_description(essential_name):
         desc = _get_new_description(essential_name)
         print(f"[[[NEW DESC: {desc}")
 
-        set_ingredient_description(desc)
+        set_ingredient_description(essential_id, desc)
     
     return desc
