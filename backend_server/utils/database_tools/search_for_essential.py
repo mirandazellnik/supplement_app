@@ -12,8 +12,8 @@ def search_essentials(query, limit=10, min_similarity=0.3):
 
     norm_query = normalize_ingredient(query)
 
+    # NO CLUE WHY THIS IS NEEDED. if it takes too long, then figure out how to fix (maybe one-off with pyscop?)
     new = db_execute_no_result("""CREATE EXTENSION IF NOT EXISTS pg_trgm;""")
-
 
     # 1️⃣ Check for exact match first (either canonical or human_name)
     exact_rows = db_execute("""

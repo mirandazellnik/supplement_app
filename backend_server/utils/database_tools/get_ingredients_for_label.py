@@ -34,8 +34,8 @@ def get_ingredients_for_label(label_id):
         WHERE ingredient_id = ANY(:ingredient_ids)
     """, {"ingredient_ids": ingredient_ids})
 
-    # Sort by increasing frequency
-    freqs.sort(key=lambda x: x[1])
+    # Sort by decreasing frequency
+    freqs.sort(key=lambda x: -x[1])
     sorted_ids = [fid for fid, _ in freqs]
 
     essentials_sorted = [{"name": essentials[a]["name"], "human_name": essentials[a]["human_name"]} for a in sorted_ids]
