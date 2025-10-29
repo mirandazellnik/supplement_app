@@ -37,7 +37,7 @@ Give me a short, roughly 3-sentence blurb about {essential_name}, as it is used 
 
 @essentials_bp.route("/search", methods=["POST"])
 @jwt_required()
-def lookup():
+def search():
     data = request.get_json()
     q = data.get("q")
     if not q:
