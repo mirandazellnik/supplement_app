@@ -31,12 +31,12 @@ def search_essentials(query, limit=10, min_similarity=0.3):
     # 2️⃣ Fuzzy search if no exact match
     rows = db_execute("""
         SELECT name, human_name, GREATEST(
-            similarity(name, :norm_query::text),
-            similarity(human_name, :query::text)
+            similarity(name, :norm_query),
+            similarity(human_name, :query)
         ) AS sim_score
         FROM ingredients
-        WHERE similarity(name, :norm_query::text) > :min_similarity
-           OR similarity(human_name, :query::text) > :min_similarity
+        WHERE similarity(name, :norm_query) > :min_similarity
+           OR similarity(human_name, :query) > :min_similarity
         ORDER BY sim_score DESC
         LIMIT :limit
     """, {
@@ -50,5 +50,5 @@ def search_essentials(query, limit=10, min_similarity=0.3):
     return results
 
 # THIS HAD TO RUN ONCE!
-#new = db_execute_no_result("""CREATE EXTENSION IF NOT EXISTS pg_trgm;""")
-#print("created new thing")
+# new = db_execute_no_result("""CREATE EXTENSION IF NOT EXISTS pg_trgm;""")
+# print("created new thing")
