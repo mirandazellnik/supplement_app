@@ -1,4 +1,4 @@
-from backend_server.utils.database_tools.db_query import db_execute
+from backend_server.utils.database_tools.db_query import db_execute, db_execute_no_result
 
 def get_ingredient_description(ingredient_id):
     """
@@ -24,7 +24,7 @@ def set_ingredient_description(ingredient_id, description):
     If a row doesn't exist, it inserts a new one.
     """
     # Use UPSERT (INSERT ... ON CONFLICT) to avoid race conditions
-    db_execute("""
+    db_execute_no_result("""
         INSERT INTO ingredient_descriptions (ingredient_id, description)
         VALUES (:ingredient_id, :description)
         ON CONFLICT (ingredient_id)
