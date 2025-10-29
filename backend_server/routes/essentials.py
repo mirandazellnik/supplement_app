@@ -25,11 +25,7 @@ def lookup():
     user_id = get_jwt_identity()  # current user
     print(f"ess name {essential_name}")
     
-    try:
-        response = get_essential_description(essential_name)
-    except Exception as e:
-        print("Error with essential lookup", e)
-        return jsonify({"error": str(e)}), 500
+    response = get_essential_description(essential_name)
     
     get_products_for_essential.delay(user_id, essential_name)
 
