@@ -96,7 +96,7 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
         "name": label.get("fullName") or label.get("brandName"),
         "brand": label.get("brandName"),
         "image": label.get("thumbnail"),
-        "raw_label": label,  # optional: include raw label if you want the frontend to show more details
+        # "raw_label": label,  # optional: include raw label if you want the frontend to show more details
     }
 
     # emit to the user's room
