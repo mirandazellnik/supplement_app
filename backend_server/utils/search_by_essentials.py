@@ -27,7 +27,7 @@ if not DATABASE_URL:
         #return api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
 else:    
 
-    def search_by_essentials(essentials, n=10, focused=False):
+    def search_by_essentials(essentials, n=10, focused=False, exclude=None):
         """
         Fetch a label row by UPC, using Redis cache. [CACHE DISABLED]
         Independent of the existing API caching.
@@ -54,6 +54,10 @@ else:
                     except Exception as e:
                         logging.warning(f"Invalid JSON for id {product_id}: {e}")
                         continue
+                
+                if exclude and str(exclude) == str(product_id):
+                    # Don't recommend an item in its own description
+                    continue
 
                 recommendations.append({
                     "id": str(product_id),

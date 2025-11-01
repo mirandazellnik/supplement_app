@@ -111,7 +111,7 @@ def fetch_label_details(user_id, product_id, recommend_after=False):
         #recommend_similar_products.delay(str(user_id), str(product_id), payload["name"], payload["brand"])
         #recommend_similar_by_essentials.delay(str(user_id), essential_info["essentials"])
 
-        recommend_similar_by_essentials_ranked.delay(str(user_id), essential_info["essentials"], n=10)
+        recommend_similar_by_essentials_ranked.delay(str(user_id), essential_info["essentials"], n=10, exclude=str(product_id))
     return None
 
 @celery.task
@@ -181,7 +181,7 @@ def recommend_similar_by_essentials(user_id, essentials):
 
 
 @celery.task
-def recommend_similar_by_essentials_ranked(user_id, essentials, n=10):
+def recommend_similar_by_essentials_ranked(user_id, essentials, n=10, exclude=None):
     """
     USING DATABASE: Recommend similar products based on the given essentials list.
     Emitted event: 'recommend_similar_products' with payload:
@@ -193,7 +193,7 @@ def recommend_similar_by_essentials_ranked(user_id, essentials, n=10):
 
     try:
         logger.info("DATABASE: Recommending similar products by essentials (emit to room=%s)", user_id)
-        recommendations = search_by_essentials(essentials, n=n)
+        recommendations = search_by_essentials(essentials, n=n, exclude=exclude)
         print("RECOMMENDATIONS BELOW")
         print(recommendations)
 
