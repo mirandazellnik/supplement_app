@@ -11,6 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { connectSocket, disconnectSocket } from "./api/socket/socket";
 import axios from "axios";
 
+import { setupFileLogger } from './util/logger';
+
 axios.defaults.timeout = 10000
 
 function AppContent() {
@@ -41,6 +43,8 @@ function AppContent() {
 }
 
 export default function App() {
+  setupFileLogger();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AlertProvider>

@@ -8,6 +8,22 @@ import HomeStack from "./HomeStack";
 import PersonalRecommendations from "../screens/PersonalRecommendations";
 import TopProductsScreen from "../screens/TopProductsScreen";
 import TopStack from "./TopStack";
+import LogViewer from "../screens/Log";
+
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+const SecretLogStack = createNativeStackNavigator();
+
+function ProfileStack() {
+  return (
+    <SecretLogStack.Navigator screenOptions={{ headerShown: false }}>
+      <SecretLogStack.Screen name="Profile" component={ProfileScreen} />
+      <SecretLogStack.Screen name="Log" options={{headerShown: true}} component={LogViewer} />
+    </SecretLogStack.Navigator>
+  );
+}
+
+
+
 
 const Tab = createBottomTabNavigator();
 //options={{ headerShown: false }}
@@ -56,7 +72,7 @@ export default function BottomTabs() {
       <Tab.Screen name="Search" options={{headerShown: false}} component={SearchProductsStack}/>
       <Tab.Screen name="Top" options={{headerShown: false}} component={TopStack} />
       <Tab.Screen name="Profile" options={{ headerShown: true, title: "Account" }}>
-        {props => <ProfileScreen {...props}/>}
+        {props => <ProfileStack {...props}/>}
       </Tab.Screen>
       {/*<Tab.Screen name="Personal Recommendations" options={{ headerShown: true }} component={PersonalRecommendations}/>*/}
       {/*<Tab.Screen name="Product" component={ProductScreen} />*/}

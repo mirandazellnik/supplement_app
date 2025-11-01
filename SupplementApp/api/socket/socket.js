@@ -11,8 +11,11 @@ function handleSocketEvent(socket, eventName, handlerKey) {
   socket.on(eventName, ({ room, data }) => {
     const id = room.split("-").pop();
     if (callbacks[id]) {
-      console.log(`📦 Event: ${eventName}`, data);
+      console.log(`📦 Event: ${eventName} for id: ${id}`, /*data*/);
       callbacks[id][handlerKey](data);
+    } else {
+      console.log(`UNHANDLED Event: ${eventName} for id: ${id}`, data);
+
     }
   });
 }
@@ -36,7 +39,8 @@ function setupSocket(socket) {
         name,
         human_name,
       }));
-      console.log("📦 Essentials transformed:", essentials);
+      console.log("📦 Essentials recieved.")
+      //console.log("📦 Essentials transformed:", essentials);
       callbacks[id]["onEssentials"](essentials);
     }
   });

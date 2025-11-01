@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { removeToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
 
-export default function ProfileScreen() {
+export default function ProfileScreen( { navigation} ) {
   const { logout } = React.useContext(AuthContext);
 
   const handleLogout = async () => {
@@ -15,6 +15,7 @@ export default function ProfileScreen() {
   // List of actions — you can easily add more in the future
   const actions = [
     { id: "logout", label: "Logout", onPress: handleLogout },
+    { id: "secret", label: "Secret Test Button", onPress: () => {navigation.navigate("Log")}}
   ];
 
   return (

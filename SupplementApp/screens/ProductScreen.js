@@ -189,7 +189,7 @@ const ProductScreen = ({ route, navigation }) => {
           image: require("../assets/images/vitamin-c.png"),
           rating: 0,
         });
-        console.log("Initial product data:", result);
+        //console.log("Initial product data:", result);
       } catch (e) {
         console.warn("Failed to fetch product:", e);
         setProduct({
