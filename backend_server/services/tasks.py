@@ -22,7 +22,6 @@ from backend_server.utils.search_by_essentials import search_by_essentials
 
 from backend_server.utils.database_tools.get_ingredients_for_label import get_ingredients_for_label
 from backend_server.utils.database_tools.get_rating import get_ratings_for_id
-from backend_server.utils.database_tools.top_by_essentials import get_top_fast
 
 logger = logging.getLogger(__name__)
 
@@ -347,12 +346,15 @@ def get_products_for_essential(user_id, essential_name):
 
         top_with_essential = search_by_essentials([{"name": essential_name}], n=10)
         top_with_essential = top_with_essential["recommendations"]
-        logger.info(f"printing top {top_with_essential}")
+        #logger.info(f"printing top {top_with_essential}")
+
+        top_with_essential_only = search_by_essentials([{"name": essential_name}], n=10, focused=True)
+        top_with_essential_only = top_with_essential["recommendations"]
         
         roomName = str(user_id) + "-e_" + essential_name
         print(roomName + "room name <---------")
 
-        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": top_with_essential}}, room=roomName)
+        socketio.emit("e_essential_products", {"room": roomName, "data": {"essential": essential_name, "products": top_with_essential, "products_focused": top_with_essential_only}}, room=roomName)
     except Exception as e:
         logger.exception("Failed to fetch products for essential %s: %s", essential_name, e)
         socketio.emit("e_essential_products_error", {"room": roomName, "data": {"essential": essential_name, "error": str(e)}}, room=roomName)

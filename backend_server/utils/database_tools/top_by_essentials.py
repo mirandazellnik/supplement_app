@@ -18,16 +18,34 @@ def get_ingredient_ids(names):
     print("-->", names, ids)
     return ids
 
-
-def top_labels_by_ingredients_fast(ingredient_ids, n):
+def top_labels_by_ingredients_fast(ingredient_ids, n, focused=False):
     """
     Fast search for top N labels containing ALL ingredient_ids.
     If fewer than N results, drop rarest ingredient and retry.
+
+    Special case:
+    If focused=True (and ingredient_ids has one element),
+    return only labels that include that ingredient
+    and have <= 2 total ingredients.
     """
     if not ingredient_ids:
         return []
 
-    # Get ingredient frequencies
+    # --- Special case: "focused" search ---
+    if focused and len(ingredient_ids) == 1:
+        target_id = ingredient_ids[0]
+        results = db_execute("""
+            SELECT l.id, r.overall_score
+            FROM labels l
+            JOIN ratings r ON l.id = r.id
+            WHERE :target_id = ANY(l.ingredient_ids)
+              AND cardinality(l.ingredient_ids) <= 2
+            ORDER BY r.overall_score DESC
+            LIMIT :n
+        """, {"target_id": target_id, "n": n})
+        return results
+
+    # --- Normal case ---
     freqs = db_execute("""
         SELECT ingredient_id, label_count
         FROM ingredient_frequency
@@ -76,8 +94,7 @@ def top_labels_by_ingredients_fast(ingredient_ids, n):
 
     return results
 
-
-def get_top_fast(ingredients, n=10):
+def get_top_fast(ingredients, n=10, focused=False):
     """
     Get top N labels matching all (or most) ingredients by name.
     Broadens search automatically if too few matches found.
@@ -89,4 +106,4 @@ def get_top_fast(ingredients, n=10):
         print("Some ingredients not found, returning empty result.")
         return []
 
-    return top_labels_by_ingredients_fast(ingredient_ids, n)
+    return top_labels_by_ingredients_fast(ingredient_ids, n, focused=focused)

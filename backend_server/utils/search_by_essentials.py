@@ -27,7 +27,7 @@ if not DATABASE_URL:
         #return api_requests.get(NIH_API_URL + f"/search-filter?q=%22{upc}%22", timeout=15)
 else:    
 
-    def search_by_essentials(essentials, n=10):
+    def search_by_essentials(essentials, n=10, focused=False):
         """
         Fetch a label row by UPC, using Redis cache. [CACHE DISABLED]
         Independent of the existing API caching.
@@ -37,7 +37,7 @@ else:
         #label_json = None
 
         try:
-            top20 = get_top_fast(essentials, n=2*n)
+            top20 = get_top_fast(essentials, n=2*n, focused=focused)
             
             top20_json = get_raw_json_by_ids([pid for pid, _ in top20]) # dict: id->json
 
