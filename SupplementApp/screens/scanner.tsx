@@ -12,6 +12,11 @@ import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSharedValue } from 'react-native-reanimated';
 
+import * as Linking from 'expo-linking';
+import { Alert } from 'react-native';
+import * as IntentLauncher from 'expo-intent-launcher'; // Android settings shortcut
+import { Platform } from "react-native";
+
 export default function QRScanner({navigation}) {
   const insets = useSafeAreaInsets();
   //const navigation = useNavigation();
@@ -40,6 +45,14 @@ export default function QRScanner({navigation}) {
     }, [navigation])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      Camera.getCameraPermissionsAsync().then(({ status }) => {
+        setHasCameraPermission(status === 'granted');
+      });
+    }, [])
+  );
+
 
   const openDeeperProduct = (screen, params) => {
     //setSheetVisible(false); // hide BottomSheet
@@ -62,10 +75,54 @@ export default function QRScanner({navigation}) {
 
   // Request camera permission
   useEffect(() => {
-    Camera.requestCameraPermissionsAsync().then(res => {
-      setHasCameraPermission(res.status === "granted");
-    });
-  }, []);
+  const requestPermission = async () => {
+    const { status, canAskAgain } = await Camera.requestCameraPermissionsAsync();
+
+    // ✅ If already granted, we’re done
+    
+    if (status === "granted") {
+      setHasCameraPermission(true);
+      return;
+    }
+
+    // ✅ Early return — don't show alert if user can still be prompted by system dialog
+    if (status === "denied" && canAskAgain) {
+      // The OS will handle showing the permission dialog again automatically
+      setHasCameraPermission(false);
+      return;
+    }
+
+    // ❌ If permanently denied (can't ask again) → show alert
+    setHasCameraPermission(false);
+
+    Alert.alert(
+      Platform.OS === "ios" ? "Enable Camera Access in Settings" : "Camera Permission Needed",
+      Platform.OS === "ios"
+        ? "Go to Settings → Privacy → Camera and enable access for this app."
+        : "Please grant camera access to scan barcodes.",
+      [
+        {
+          text: Platform.OS === "ios" ? "Open Settings" : "Grant Access",
+          onPress: async () => {
+            if (Platform.OS === "ios") {
+              await Linking.openURL("app-settings:");
+            } else {
+              const { status: newStatus } = await Camera.requestCameraPermissionsAsync();
+              if (newStatus === "granted") setHasCameraPermission(true);
+            }
+          },
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => navigation.goBack(),
+        },
+      ]
+    );
+  };
+
+  requestPermission();
+}, []);
 
   // Handle barcode scanned
   const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
@@ -105,12 +162,38 @@ export default function QRScanner({navigation}) {
   );
 
   if (hasCameraPermission === null) return <View style={{ flex: 1 }} />;
-  if (hasCameraPermission === false)
+  if (hasCameraPermission === false) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>No camera permission</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        {/* Top-right Back Button */}
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + 20, zIndex: 0 }]} // safe area + margin
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={28} color="white" />
+        </TouchableOpacity>
+        <Text style={{ marginBottom: 10, color: 'black' }}>
+          Camera permission is required to scan barcodes.
+        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            // Retry permission check if they come back from Settings
+            Camera.requestCameraPermissionsAsync().then(res => {
+              if (res.status === 'granted') setHasCameraPermission(true);
+            });
+          }}
+          style={{
+            backgroundColor: '#007AFF',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 6,
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Try Again</Text>
+        </TouchableOpacity>
       </View>
     );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor:"black" }}>
