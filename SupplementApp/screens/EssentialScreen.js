@@ -1,54 +1,56 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  useWindowDimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TabView, TabBar } from "react-native-tab-view";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+
 import { colors } from "../styles/colors";
 import { spacing } from "../styles/spacing";
 import { typography } from "../styles/typography";
-import StarRating from "../components/StarRating";
-
-import { getEssential } from "../api/essentials";
-import { ActivityIndicator } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
-
+import ProductImageById from "../components/ProductImageById";
+import RatingBar from "../components/RatingBar";
+import { useAlert } from "../contexts/AlertContext";
 import { joinEssentialRoom } from "../api/socket/essentialSocket";
 import { leaveRoom } from "../api/socket/socket";
-import ProductImageById from "../components/ProductImageById";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useAlert } from "../contexts/AlertContext";
-
-import RatingBar from "../components/RatingBar";
+import { getEssential } from "../api/essentials";
 
 const PRODUCT_IMAGE_SIZE = 60;
 
 const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal, essentialHumanName }) => {
-    //const { essentialName } = route.params || {};
-
-  //const [essentialName, setEssentialName] = useState("Vitamin C");
   const [essentialDesc, setEssentialDesc] = useState("");
   const [loadingDesc, setLoadingDesc] = useState(true);
-  const [essentialNameToLookup, setEssentialNameToLookup] = useState(essentialName);
 
-  const [products, setProducts] = useState([]);
+  // ✅ separate product states
+  const [productsRecommended, setProductsRecommended] = useState([]);
+  const [productsAll, setProductsAll] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const bottomTabHeight = useBottomTabBarHeight()
-  const { showAlert } = useAlert()
+  const { showAlert } = useAlert();
+  const bottomTabHeight = useBottomTabBarHeight();
+  const layout = useWindowDimensions();
 
+  // --- Load products ---
   useEffect(() => {
-    
     joinEssentialRoom(essentialName, {
       e_onProducts: (products) => {
-        console.log("calllback!")
-        setProducts(products["products"]);
+        // for now, assign both lists the same data
+        const list = products["products"] || [];
+        const list2 = products["products_focused"] || [];
+        setProductsRecommended(list2);
+        setProductsAll(list);
         setLoadingProducts(false);
       },
       e_onProductsError: (error) => {
         console.error("Error fetching products:", error);
         setLoadingProducts(false);
-      },
-      onReady: () => {
-        setEssentialNameToLookup(essentialName);
       },
     });
 
@@ -57,67 +59,182 @@ const EssentialScreen = ({ navigation, essentialName, inHome, inHomeFromModal, e
     };
   }, [essentialName]);
 
+  // --- Load essential description ---
   useEffect(() => {
-    setEssentialDesc("");
-    setLoadingDesc(true);
-    setProducts([]);
-    setLoadingProducts(true);
-  }, [essentialName]);
-
-  useEffect(() => {
-    if (!essentialNameToLookup) return;
-
     async function fetchEssential() {
-      let desc;
       try {
-        desc = await getEssential(essentialNameToLookup);
+        const desc = await getEssential(essentialName);
+        setEssentialDesc(desc);
       } catch (e) {
-        showAlert("Something went wrong", "Sorry, please try again later!")
+        showAlert("Something went wrong", "Sorry, please try again later!");
+      } finally {
+        setLoadingDesc(false);
       }
-      setEssentialDesc(desc);
-      setLoadingDesc(false);
     }
     fetchEssential();
-  }, [essentialNameToLookup]);
+  }, [essentialName]);
 
+  // --- Product card renderer ---
+  // --- Product card renderer ---
   const renderProduct = ({ item }) => (
-    <TouchableOpacity onPress={() => {item?.id ? inHomeFromModal ? navigation.navigate("BeyondScanner", {screen: "ProductScanner", params: {id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true}}) : navigation.push(inHome ? "ProductScanner" : "Product", {id: item.id, name: item.name, brand: item.brand, inStack: true}) : 1}} style={styles.productBox}>
-      <ProductImageById loading={loadingProducts} productId={item.id} style={styles.productImage} />
+    <TouchableOpacity
+      onPress={() => {
+        if (!item?.id) return;
+        if (inHomeFromModal) {
+          navigation.navigate("BeyondScanner", {
+            screen: "ProductScanner",
+            params: { id: item.id, name: item.name, brand: item.brand, inStack: true, fromHome: true },
+          });
+        } else {
+          navigation.push(inHome ? "ProductScanner" : "Product", {
+            id: item.id,
+            name: item.name,
+            brand: item.brand,
+            inStack: true,
+          });
+        }
+      }}
+      style={styles.productBox}
+    >
+      <ProductImageById
+        loading={loadingProducts}
+        productId={item.id}
+        style={styles.productImage}
+      />
       <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
+
+        {item.brand ? (
+          <Text style={styles.productBrand} numberOfLines={1}>
+            {item.brand}
+          </Text>
+        ) : null}
+
         <View style={styles.ratingRow}>
-          <RatingBar rating={Math.round(item?.score*10)/20} />
-          <Text style={styles.ratingText}>{Math.round(item?.score*10)}/100</Text>
+          <RatingBar rating={Math.round(item?.score * 10) / 20} />
+          <Text style={styles.ratingText}>
+            {Math.round(item?.score * 10)}/100
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 
-  return (
-    <SafeAreaView edges={['left', 'right']} style={{ flex:1, paddingBottom: 0, paddingHorizontal: spacing.lg, paddingTop: spacing.lg}}>
-          <Text style={styles.essentialName}>{essentialHumanName}</Text>
-          {loadingDesc ? (
-                  <View style={{ alignItems: "center", marginVertical: spacing.md }}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text>Loading...</Text>
-                  </View>
-                ) : (
-          <Text style={styles.essentialDescription}>{essentialDesc}</Text>)}
-          <Text style={styles.sectionTitle}>Top Products with {essentialHumanName}</Text>
-    { loadingProducts ? (
-                  <View style={{ alignItems: "center", marginVertical: spacing.md }}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text>Loading...</Text>
-                  </View>
-                ) :
-    <FlatList
-      data={products}
-      keyExtractor={(item) => item.id}
-      renderItem={renderProduct}
-      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-      contentContainerStyle={{ paddingBottom: bottomTabHeight }}
-    />
+  // --- Reusable scene renderer (uses the appropriate list) ---
+  const renderProductList = useCallback(
+    (data) => (
+      <View style={{ flex: 1 }}>
+        {loadingProducts ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text>Loading...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={data}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={renderProduct}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+            contentContainerStyle={{
+              paddingHorizontal: spacing.lg,
+              paddingVertical: spacing.md,
+              
+            }}
+          />
+        )}
+      </View>
+    ),
+    [loadingProducts, bottomTabHeight]
+  );
+
+  // --- TabView setup ---
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: "recommended", title: "Main Ingredient" },
+    { key: "all", title: "Blended Formula" },
+  ]);
+
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case "recommended":
+        return renderProductList(productsRecommended);
+      case "all":
+        return renderProductList(productsAll);
+      default:
+        return null;
     }
+  };
+
+  const ExpandableDescription = ({ text }) => {
+    const [expanded, setExpanded] = useState(false);
+    const MAX_LENGTH = 200;
+
+    if (!text) return null;
+
+    const isTruncated = text.length > MAX_LENGTH;
+    const displayText = expanded ? text : text.slice(0, MAX_LENGTH) + (isTruncated ? "..." : "");
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => isTruncated && setExpanded(!expanded)}
+        style={styles.descBox}
+      >
+        <Text style={styles.essentialDescriptionBoxText}>{displayText}</Text>
+
+        {isTruncated && (
+          <View style={styles.readMoreButton}>
+            <Text style={styles.readMoreText}>
+              {expanded ? "Show less" : "Read more"}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <SafeAreaView edges={["left", "right"]} style={{ flex: 1, paddingTop: spacing.lg }}>
+      <Text style={styles.essentialName}>{essentialHumanName}</Text>
+
+      {loadingDesc ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text>Loading...</Text>
+        </View>
+      ) : (
+        <ExpandableDescription text={essentialDesc} />
+      )}
+
+      <Text style={styles.sectionTitle}>Top Products with {essentialHumanName}</Text>
+
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width: layout.width }}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            indicatorStyle={{ backgroundColor: colors.primary }}
+            style={{ backgroundColor: "#f1f1f1" }}
+            labelStyle={{ fontWeight: "600" }}
+            activeColor={colors.primary}
+            inactiveColor="#666"
+          />
+        )}
+        lazy={false}
+        renderLazyPlaceholder={() => null}
+        swipeEnabled={false}
+        animationEnabled={true}
+        removeClippedSubviews={false}
+        gestureHandlerProps={{
+          activeOffsetX: [-20, 20],
+          failOffsetY: [-5, 5],
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -128,6 +245,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: "bold",
     marginBottom: 6,
+    paddingHorizontal: spacing.lg,
   },
   essentialDescription: {
     ...typography.body,
@@ -135,12 +253,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: spacing.lg,
     lineHeight: 22,
+    paddingHorizontal: spacing.lg,
   },
   sectionTitle: {
     ...typography.h3,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
     fontWeight: "bold",
+    paddingHorizontal: spacing.lg,
   },
   productBox: {
     flexDirection: "row",
@@ -171,7 +291,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: "600",
     fontSize: 17,
-    marginBottom: 4,
+    marginBottom: 0,
   },
   ratingRow: {
     flexDirection: "row",
@@ -183,6 +303,62 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
+  loadingContainer: {
+    alignItems: "center",
+    marginVertical: spacing.md,
+  },
+  descContainer: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  readMoreText: {
+    color: colors.primary,
+    fontWeight: "600",
+    marginTop: 4,
+    fontSize: 15,
+  },
+  descBox: {
+  backgroundColor: "#f8f9fb",
+  borderRadius: 14,
+  paddingVertical: spacing.md,
+  paddingHorizontal: spacing.md, // single consistent padding
+  marginHorizontal: spacing.lg,
+  marginBottom: spacing.md,
+  shadowColor: "#000",
+  shadowOpacity: 0.03,
+  shadowRadius: 2,
+  shadowOffset: { width: 0, height: 1 },
+  elevation: 1,
+},
+
+// updated text style inside description box
+essentialDescriptionBoxText: {
+  ...typography.body,
+  color: "#777",
+  fontSize: 15,
+  lineHeight: 20,
+},
+
+readMoreButton: {
+  alignSelf: "flex-start",
+  backgroundColor: colors.primary + "15",
+  borderRadius: 8,
+  paddingHorizontal: spacing.sm,
+  paddingVertical: 4,
+  marginTop: 8,
+},
+
+readMoreText: {
+  color: colors.primary,
+  fontWeight: "600",
+  fontSize: 14,
+},
+productBrand: {
+  color: "#222",
+  fontSize: 14,
+  marginBottom: 8,
+  opacity: 0.8,
+},
 });
 
 export default EssentialScreen;

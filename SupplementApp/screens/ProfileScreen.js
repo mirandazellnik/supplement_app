@@ -15,7 +15,7 @@ export default function ProfileScreen( { navigation} ) {
   // List of actions — you can easily add more in the future
   const actions = [
     { id: "logout", label: "Logout", onPress: handleLogout },
-    { id: "secret", label: "Secret Test Button", onPress: () => {navigation.navigate("Log")}}
+    { id: "secret", label: "Development Test Button", onPress: () => {navigation.navigate("Log")}}
   ];
 
   return (
@@ -28,9 +28,12 @@ export default function ProfileScreen( { navigation} ) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
+          item.id == "secret" ? <TouchableOpacity style={[styles.button, {backgroundColor:"#fff", marginTop:50}]} onPress={item.onPress}>
+            <Text style={[styles.buttonText, {color:"black"}]}>{item.label}</Text>
+          </TouchableOpacity> : (
           <TouchableOpacity style={styles.button} onPress={item.onPress}>
             <Text style={styles.buttonText}>{item.label}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>)
         )}
       />
     </LinearGradient>
