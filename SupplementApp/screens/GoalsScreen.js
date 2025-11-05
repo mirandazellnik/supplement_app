@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AuthContext } from "../contexts/AuthContext";
+import { submitSetup } from "../api/user";
 
 const goalOptions = [
   "Longevity",
@@ -13,7 +14,7 @@ const goalOptions = [
 ];
 
 export default function GoalsScreen({ navigation, selectedGoals, setSelectedGoals }) {
-  const { logout } = useContext(AuthContext);
+  const { setSetupComplete, logout } = useContext(AuthContext);
 
   const toggleGoal = (goal) => {
     if (selectedGoals.includes(goal)) {
@@ -22,6 +23,18 @@ export default function GoalsScreen({ navigation, selectedGoals, setSelectedGoal
       setSelectedGoals([...selectedGoals, goal]);
     }
   };
+
+  // SKIP MEDS SCREEN
+  const handleSubmit = async () => {
+      try {
+        await submitSetup({ goals: selectedGoals, meds: [] });
+        setSetupComplete(true);
+      } catch (err) {
+        console.log("Submit setup failed:", err);
+        showAlert("Failed to submit. Please try again.");
+      }
+    };
+
 
   return (
     <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.container}>
@@ -66,7 +79,7 @@ export default function GoalsScreen({ navigation, selectedGoals, setSelectedGoal
 
           <TouchableOpacity
             style={styles.nextButton}
-            onPress={() => navigation.navigate("MedsPage")}
+            onPress={() => /*navigation.navigate("MedsPage")*/ {handleSubmit()}}
           >
             <Text style={styles.nextButtonText}>{(selectedGoals.length > 0) ? "Next" : "Skip"}</Text>
           </TouchableOpacity>

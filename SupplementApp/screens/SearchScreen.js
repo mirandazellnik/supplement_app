@@ -20,6 +20,7 @@ export default function SearchScreen( {navigation} ) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasSearchedYet, setHasSearchedYet] = useState(false);
   const { showAlert } = useAlert();
 
   const doSearch = async () => {
@@ -35,6 +36,7 @@ export default function SearchScreen( {navigation} ) {
         setResults([]);
         showAlert("No products found.");
       }
+      setHasSearchedYet(true);
     } catch (error) {
       //console.error(error);
       showAlert("Error searching products.");
@@ -117,9 +119,9 @@ export default function SearchScreen( {navigation} ) {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          !loading ? (
-            <Text style={styles.emptyText}>No results yet.</Text>
-          ) : null
+          !loading ? hasSearchedYet ? (
+            <Text style={styles.emptyText}>No results.</Text>
+          ) : null : null
         }
         contentContainerStyle={{ paddingBottom: 10 }}
       />

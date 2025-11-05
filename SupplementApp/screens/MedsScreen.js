@@ -16,6 +16,8 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useAlert } from "../contexts/AlertContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// NOTE: THIS SCREEN IS DISABLED CURRENTLY
+
 export default function MedsScreen({ navigation, meds, setMeds, selectedGoals }) {
   const [input, setInput] = useState("");
   const [focusedInput, setFocusedInput] = useState(false);
