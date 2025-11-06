@@ -42,9 +42,9 @@ export default function LoginEmailScreen({ navigation }) {
     try {
       exists = await check_whether_user_exists(email);
       if (!exists) {
-        navigation.navigate("Register", { email });
+        navigation.navigate("Register", { email, setEmail });
       } else {
-        navigation.navigate("Login", { email });
+        navigation.navigate("Login", { email, setEmail });
       }
     } catch (error) {
       showAlert("Error", error.toString());

@@ -8,24 +8,22 @@ import {
   Image,
   Platform,
   Animated,
-  ScrollView
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { login as apiLogin } from "../api/auth";
 import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
-//import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
 import KeyboardScrollView from "../components/KeyboardScrollView";
 
 export default function LoginScreen({ navigation, email }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(null); // 'password' | null
+  const [focusedInput, setFocusedInput] = useState(null);
   const { login } = useContext(AuthContext);
   const { showAlert } = useAlert();
 
-  // Animated value for password background and shadow
   const passwordAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -53,7 +51,6 @@ export default function LoginScreen({ navigation, email }) {
     }
   };
 
-  // Interpolations
   const interpolateBackground = (anim) =>
     anim.interpolate({
       inputRange: [0, 1],
@@ -63,11 +60,12 @@ export default function LoginScreen({ navigation, email }) {
   const interpolateShadow = (anim) =>
     anim.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, 8], // shadow radius
+      outputRange: [0, 8],
     });
 
   return (
     <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.gradient}>
+      {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
           source={require("../assets/logo.png")}
@@ -84,7 +82,7 @@ export default function LoginScreen({ navigation, email }) {
       >
         <Text style={styles.title}>Welcome Back!</Text>
 
-        {/* Info box with email */}
+        {/* Info box */}
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
             You've already used{" "}
@@ -93,7 +91,7 @@ export default function LoginScreen({ navigation, email }) {
           </Text>
         </View>
 
-        {/* Password label */}
+        {/* Password field */}
         <Text style={styles.inputLabel}>Password</Text>
         <Animated.View
           style={[
@@ -118,6 +116,7 @@ export default function LoginScreen({ navigation, email }) {
           />
         </Animated.View>
 
+        {/* Login button */}
         <TouchableOpacity
           style={[styles.button, loading && { opacity: 0.7 }]}
           onPress={handleLogin}
@@ -128,11 +127,19 @@ export default function LoginScreen({ navigation, email }) {
           </Text>
         </TouchableOpacity>
 
+        {/* Translucent Back button */}
         <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
-          style={styles.linkContainer}
+          style={styles.smallButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
         >
-          <Text style={styles.linkText}>Forgot password?</Text>
+          <Ionicons
+            name="arrow-back"
+            size={16}
+            color="#fff"
+            style={{ marginRight: 6, opacity: 0.9 }}
+          />
+          <Text style={styles.smallButtonText}>Back</Text>
         </TouchableOpacity>
       </KeyboardScrollView>
     </LinearGradient>
@@ -226,8 +233,30 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 5,
   },
-  buttonText: { color: "#2575fc", fontWeight: "700", fontSize: 18 },
+  buttonText: {
+    color: "#2575fc",
+    fontWeight: "700",
+    fontSize: 18,
+  },
 
-  linkContainer: { marginTop: 20, alignItems: "center" },
-  linkText: { color: "#fff", textDecorationLine: "underline", fontSize: 16 },
+  smallButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    marginTop: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+  },
+  smallButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
 });

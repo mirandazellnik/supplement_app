@@ -13,10 +13,10 @@ export default function AuthStack() {
       <Stack.Screen name="InitialWelcome" component={InitialWelcome} />
       <Stack.Screen name="LoginEmail" component={LoginEmailScreen} />
       <Stack.Screen name="Login">
-        {props => <LoginScreen {...props} email={props.route.params?.email}/>}
+        {props => <LoginScreen {...props} email={props.route.params?.email} setEmail={props.route.params?.setEmail}/>}
       </Stack.Screen>
       <Stack.Screen name="Register">
-        {props => <RegisterScreen {...props} email={props.route.params?.email}/>}
+        {props => <RegisterScreen {...props} email={props.route.params?.email} setEmail={props.route.params?.setEmail}/>}
       </Stack.Screen>
     </Stack.Navigator>
   );

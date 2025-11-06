@@ -8,13 +8,12 @@ import {
   Image,
   Platform,
   Animated,
-  ScrollView
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { login as apiLogin, register } from "../api/auth";
 import { saveToken } from "../util/storage";
 import { AuthContext } from "../contexts/AuthContext";
-//import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAlert } from "../contexts/AlertContext";
 import KeyboardScrollView from "../components/KeyboardScrollView";
 
@@ -22,9 +21,8 @@ export default function RegisterScreen({ navigation, email }) {
   const [firstName, setFirstName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(null); // 'firstName' | 'password' | null
+  const [focusedInput, setFocusedInput] = useState(null);
   const { login } = useContext(AuthContext);
-  
   const { showAlert } = useAlert();
 
   const firstNameAnim = useRef(new Animated.Value(0)).current;
@@ -53,7 +51,6 @@ export default function RegisterScreen({ navigation, email }) {
     }
     setLoading(true);
     try {
-      // Pass email as username to backend
       await register(email, firstName, password);
       const data = await apiLogin(email, password);
       await saveToken(data.access_token);
@@ -103,7 +100,7 @@ export default function RegisterScreen({ navigation, email }) {
           </Text>
         </View>
 
-        {/* Small label above first name box */}
+        {/* First Name */}
         <Text style={styles.inputLabel}>First Name</Text>
         <Animated.View
           style={[
@@ -127,7 +124,7 @@ export default function RegisterScreen({ navigation, email }) {
           />
         </Animated.View>
 
-        {/* Small label above password box */}
+        {/* Password */}
         <Text style={styles.inputLabel}>New Password</Text>
         <Animated.View
           style={[
@@ -152,6 +149,7 @@ export default function RegisterScreen({ navigation, email }) {
           />
         </Animated.View>
 
+        {/* Register button */}
         <TouchableOpacity
           style={[styles.button, loading && { opacity: 0.7 }]}
           onPress={handleRegister}
@@ -160,6 +158,21 @@ export default function RegisterScreen({ navigation, email }) {
           <Text style={styles.buttonText}>
             {loading ? "Registering..." : "Register"}
           </Text>
+        </TouchableOpacity>
+
+        {/* Translucent Back button */}
+        <TouchableOpacity
+          style={styles.smallButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={16}
+            color="#fff"
+            style={{ marginRight: 6, opacity: 0.9 }}
+          />
+          <Text style={styles.smallButtonText}>Back</Text>
         </TouchableOpacity>
       </KeyboardScrollView>
     </LinearGradient>
@@ -249,8 +262,30 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 5,
   },
-  buttonText: { color: "#2575fc", fontWeight: "700", fontSize: 18 },
+  buttonText: {
+    color: "#2575fc",
+    fontWeight: "700",
+    fontSize: 18,
+  },
 
-  linkContainer: { marginTop: 20, alignItems: "center" },
-  linkText: { color: "#fff", textDecorationLine: "underline", fontSize: 16 },
+  smallButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    marginTop: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+  },
+  smallButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
 });
